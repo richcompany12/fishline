@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="72dp"
+    android:layout_height="72dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/floating_bg"
+    android:elevation="8dp">
+    <TextView
+        android:id="@+id/float_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#080808"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:maxLines="1"/>
+    <TextView
+        android:id="@+id/float_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textColor="#080808"
+        android:textSize="24sp"
+        android:textStyle="bold"/>
+</LinearLayout>
