@@ -37,10 +37,11 @@
       "favicon": "./assets/images/favicon.ico"
     },
     "plugins": [
-  "expo-router",
-  "expo-web-browser",
-    "./plugins/withFloatingButton"
-],
+      "expo-router",
+      "expo-web-browser",
+      "./plugins/withFloatingButton",
+      "@react-native-google-signin/google-signin"
+    ],
     "experiments": {
       "typedRoutes": true
     },

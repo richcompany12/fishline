@@ -6,7 +6,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex:1, backgroundColor:'#080808' }}>
+    <View style={{ flex: 1, backgroundColor: '#080808' }}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -31,7 +31,7 @@ export default function TabLayout() {
           options={{
             title: 'SIMULATOR',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize:20, opacity: focused ? 1 : 0.6 }}>🎣</Text>
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.6 }}>🎣</Text>
             ),
           }}
         />
@@ -40,7 +40,7 @@ export default function TabLayout() {
           options={{
             title: 'COUNTER',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize:20, opacity: focused ? 1 : 0.6 }}>🦑</Text>
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.6 }}>🦑</Text>
             ),
           }}
         />
@@ -49,7 +49,7 @@ export default function TabLayout() {
           options={{
             title: 'SETTINGS',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize:20, opacity: focused ? 1 : 0.6 }}>⚙️</Text>
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.6 }}>⚙️</Text>
             ),
           }}
         />

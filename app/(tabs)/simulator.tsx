@@ -43,6 +43,9 @@ export default function SimulatorScreen() {
   const ox = cx + 34;
   const oy = surfY - 8;
 
+  // [배 위치 수정] 배가 수면 위에 뜨도록 boatOffset 추가
+  const boatOffset = 18; // 수면 위로 띄우는 픽셀
+
   function buildPath(points: {x:number,y:number}[]) {
     if (!points.length) return '';
     let d = `M ${ox} ${oy}`;
@@ -177,26 +180,26 @@ export default function SimulatorScreen() {
               <Rect x={0} y={CANVAS_H-16} width={CANVAS_W} height={16}
                 fill="#100e08"/>
 
-              {/* 배 */}
-              {/* 선체 */}
+              {/* [배 위치 수정] boatOffset 만큼 위로 띄움 */}
+              {/* 선체 — 수면 위에 올라오도록 */}
               <Path
-                d={`M${cx-40} ${surfY-2} C${cx-44} ${surfY+8} ${cx-28} ${surfY+20} ${cx-16} ${surfY+20} L${cx+16} ${surfY+20} C${cx+28} ${surfY+20} ${cx+44} ${surfY+8} ${cx+40} ${surfY-2} Z`}
+                d={`M${cx-40} ${surfY-boatOffset} C${cx-44} ${surfY-boatOffset+10} ${cx-28} ${surfY-boatOffset+22} ${cx-16} ${surfY-boatOffset+22} L${cx+16} ${surfY-boatOffset+22} C${cx+28} ${surfY-boatOffset+22} ${cx+44} ${surfY-boatOffset+10} ${cx+40} ${surfY-boatOffset} Z`}
                 fill="#1a1408" stroke="rgba(201,168,76,0.4)" strokeWidth={0.8}/>
               {/* 갑판 */}
-              <Rect x={cx-22} y={surfY-9} width={44} height={8}
+              <Rect x={cx-22} y={surfY-boatOffset-9} width={44} height={8}
                 fill="#141410" stroke="rgba(201,168,76,0.2)" strokeWidth={0.5}/>
               {/* 마스트 */}
-              <Line x1={cx} y1={surfY-32} x2={cx} y2={surfY-8}
+              <Line x1={cx} y1={surfY-boatOffset-32} x2={cx} y2={surfY-boatOffset-8}
                 stroke="#c9a84c" strokeWidth={2}/>
               {/* 항법등 */}
-              <Circle cx={cx} cy={surfY-32} r={2.5} fill="#c9a84c"/>
-              <Circle cx={cx} cy={surfY-32} r={5}
+              <Circle cx={cx} cy={surfY-boatOffset-32} r={2.5} fill="#c9a84c"/>
+              <Circle cx={cx} cy={surfY-boatOffset-32} r={5}
                 fill="rgba(201,168,76,0.2)"/>
               {/* 낚싯대 */}
-              <Line x1={cx} y1={surfY-24} x2={ox} y2={oy}
+              <Line x1={cx} y1={surfY-boatOffset-24} x2={ox} y2={oy}
                 stroke="rgba(201,168,76,0.5)" strokeWidth={1.2}/>
               {/* 릴 */}
-              <Circle cx={cx+14} cy={surfY-12} r={2} fill="#c9a84c"/>
+              <Circle cx={cx+14} cy={surfY-boatOffset-12} r={2} fill="#c9a84c"/>
 
               {/* 저장 라인 (빨강 점선) */}
               {savedPts && (
@@ -275,26 +278,36 @@ export default function SimulatorScreen() {
         </View>
 
         {/* ── 저장 버튼 ── */}
+        {/* [버튼 토글 수정]
+            저장 전: 내 세팅 저장 → 골드(활성), 지우기 → 흐림(비활성)
+            저장 후: 내 세팅 저장 → 흐림(비활성), 지우기 → 골드(활성) */}
         <View style={styles.btnRow}>
+          {/* 내 세팅 저장 버튼 */}
           <TouchableOpacity
-            style={[styles.btnGold, hasSaved && styles.btnDisabled]}
+            style={[styles.btnGold, hasSaved && styles.btnGoldDisabled]}
             disabled={hasSaved}
             onPress={async () => {
               setSaved({ dia, sinker, vRel, depth });
               setHasSaved(true);
               await saveUserSetting({ lineType, peKey, dia, sinker });
             }}>
-            <Text style={[styles.btnGoldText,
-              hasSaved && styles.btnDisabledText]}>
+            <Text style={[styles.btnGoldText, hasSaved && styles.btnTextDisabled]}>
               ⚓ 내 세팅 저장
             </Text>
           </TouchableOpacity>
+
+          {/* 지우기 버튼 — 저장 후 골드로 활성화 */}
           <TouchableOpacity
-            style={[styles.btnGhost, !hasSaved && styles.btnDisabled]}
+            style={[
+              hasSaved ? styles.btnGoldSmall : styles.btnGhost,
+              !hasSaved && styles.btnGhostDisabled,
+            ]}
             disabled={!hasSaved}
             onPress={() => { setSaved(null); setHasSaved(false); }}>
-            <Text style={[styles.btnGhostText,
-              !hasSaved && styles.btnDisabledText]}>
+            <Text style={[
+              hasSaved ? styles.btnGoldText : styles.btnGhostText,
+              !hasSaved && styles.btnTextDisabled,
+            ]}>
               지우기
             </Text>
           </TouchableOpacity>
@@ -354,7 +367,7 @@ const styles = StyleSheet.create({
   smallBtnTextActive: { color:'#e8c96a' },
 
   sideInfo: {
-    position:'absolute', left:6, top:10,
+    position:'absolute', left:6, top:80,
     gap:16,
   },
   sideItem: { alignItems:'center' },
@@ -397,16 +410,36 @@ const styles = StyleSheet.create({
     flexDirection:'row', gap:8,
     margin:16, marginTop:0, marginBottom:24,
   },
+
+  // 내 세팅 저장 — 기본 골드
   btnGold: {
     flex:1, backgroundColor:'#c9a84c',
     padding:13, borderRadius:4, alignItems:'center',
   },
-  btnGoldText: { color:'#080808', fontWeight:'700', fontSize:12, letterSpacing:1 },
+  // 내 세팅 저장 — 저장 후 흐림
+  btnGoldDisabled: {
+    backgroundColor:'rgba(201,168,76,0.15)',
+    borderWidth:1, borderColor:'rgba(201,168,76,0.2)',
+  },
+
+  // 지우기 — 저장 후 골드 (작은 버튼)
+  btnGoldSmall: {
+    paddingHorizontal:20, padding:13,
+    backgroundColor:'#c9a84c',
+    borderRadius:4, alignItems:'center',
+  },
+
+  // 지우기 — 기본 ghost
   btnGhost: {
-    padding:13, paddingHorizontal:16, borderRadius:4,
+    paddingHorizontal:20, padding:13, borderRadius:4,
     borderWidth:1, borderColor:'rgba(201,168,76,0.2)', alignItems:'center',
   },
+  // 지우기 — 저장 전 흐림
+  btnGhostDisabled: {
+    opacity: 0.3,
+  },
+
+  btnGoldText: { color:'#080808', fontWeight:'700', fontSize:12, letterSpacing:1 },
   btnGhostText: { color:'#8a7a5a', fontSize:12 },
-  btnDisabled: { opacity:0.3 },
-  btnDisabledText: { color:'#3a3020' },
+  btnTextDisabled: { color:'#3a3020' },
 });
