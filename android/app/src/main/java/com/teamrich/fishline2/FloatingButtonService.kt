@@ -175,9 +175,9 @@ private fun requestDataFromApp() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 900
-            y = 1600
+            gravity = Gravity.BOTTOM or Gravity.END  // 👈 TOP/START → BOTTOM/END 로 변경
+    x = 16
+    y = 80  // 👈 하단에서 80px 위 (네비게이션 높이 고려)
         }
 
         windowManager.addView(floatingView, floatParams)
