@@ -23,6 +23,7 @@ interface AppState {
   plusCount: (id: string) => void;
   minusCount: (id: string) => void;
   resetAll: () => void;
+  resetItem: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -84,4 +85,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   resetAll: () => set(state => ({
     items: state.items.map(i => ({ ...i, count: 0 })),
   })),
+
+resetItem: (id: string) => set(state => ({
+  items: state.items.map(i =>
+    i.id === id ? { ...i, count: 0 } : i
+  ),
+})),
+
 }));

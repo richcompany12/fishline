@@ -1,11 +1,37 @@
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Switch, AppState } from 'react-native'; // 👈 AppState 추가
+import { useState, useEffect } from 'react'; // 👈 useEffect 추가
 import { useAppStore } from '@/store/useAppStore';
-import { startFloatingButton, stopFloatingButton } from '@/lib/FloatingService';
+import { startFloatingButton, stopFloatingButton, updateFloatingItems } from '@/lib/FloatingService';
 
 export default function SettingsScreen() {
   const { boatRatio, setBoatRatio } = useAppStore();
   const [floatingEnabled, setFloatingEnabled] = useState(false);
+
+  // 권한 설정 화면 갔다가 앱으로 돌아올 때 자동으로 서비스 시작 재시도
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (state !== 'active') return;
+      if (!floatingEnabled) return; // 토글이 켜져있을 때만
+
+      try {
+        await startFloatingButton();
+        // 서비스 시작 성공 시 현재 데이터 push
+        const { items, curId } = useAppStore.getState();
+        const idx = items.findIndex((i: any) => i.id === curId);
+        updateFloatingItems(
+          items.map((i: any) => ({ name: i.name, count: i.count })),
+          idx >= 0 ? idx : 0,
+          false
+        );
+      } catch (e: any) {
+        if (e.code === 'NO_PERMISSION') {
+          // 권한 거부하고 돌아온 경우 → 토글 자동으로 끄기
+          setFloatingEnabled(false);
+        }
+      }
+    });
+    return () => sub.remove();
+  }, [floatingEnabled]);
 
   return (
     <View style={styles.container}>
@@ -61,6 +87,14 @@ export default function SettingsScreen() {
                 if (value) {
                   setFloatingEnabled(true);
                   await startFloatingButton();
+                  // 서비스 시작 직후 현재 데이터 즉시 push
+                  const { items, curId } = useAppStore.getState();
+                  const idx = items.findIndex((i: any) => i.id === curId);
+                  updateFloatingItems(
+                    items.map((i: any) => ({ name: i.name, count: i.count })),
+                    idx >= 0 ? idx : 0,
+                    false
+                  );
                 } else {
                   setFloatingEnabled(false);
                   await stopFloatingButton();
@@ -128,7 +162,6 @@ const styles = StyleSheet.create({
   },
   logo: { fontSize:22, fontWeight:'700', letterSpacing:4, color:'#e8c96a' },
   logoSub: { fontSize:8, letterSpacing:4, color:'#8a7a5a', marginTop:2 },
-
   card: {
     backgroundColor:'#0f0f0f', borderWidth:1,
     borderColor:'rgba(201,168,76,0.15)', borderRadius:4,
@@ -138,7 +171,6 @@ const styles = StyleSheet.create({
     fontSize:9, letterSpacing:4, color:'#c9a84c',
     marginBottom:16, fontWeight:'500',
   },
-
   ratioWrap: {
     flexDirection:'row', alignItems:'center',
     marginBottom:14, gap:16,
@@ -169,7 +201,6 @@ const styles = StyleSheet.create({
   ratioDescText: {
     fontSize:11, color:'#8a7a5a', lineHeight:18,
   },
-
   switchRow: {
     flexDirection:'row', justifyContent:'space-between', alignItems:'center',
   },
@@ -183,7 +214,6 @@ const styles = StyleSheet.create({
     borderRadius:4,
   },
   infoText: { fontSize:11, color:'#c9a84c', lineHeight:16 },
-
   row: {
     flexDirection:'row', justifyContent:'space-between',
     paddingVertical:8, borderBottomWidth:1,
