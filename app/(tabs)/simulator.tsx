@@ -6,6 +6,8 @@ import { calcLineCurve } from '@/lib/physics';
 import { useAppStore } from '@/store/useAppStore';
 import Svg, { Path, Line, Circle, Rect, Defs,
                LinearGradient, Stop } from 'react-native-svg';
+import AdModal from '@/components/AdModal';
+import { shouldShowAd, markAdShown, AD_KEY_SETTINGS } from '@/lib/adService';
 
 const { width } = Dimensions.get('window');
 const CANVAS_W = width - 32;
@@ -20,6 +22,7 @@ export default function SimulatorScreen() {
   const [depth, setDepth] = useState(80);
   const [saved, setSaved] = useState<any>(null);
   const [hasSaved, setHasSaved] = useState(false);
+  const [adVisible, setAdVisible] = useState(false);
 
   const dia = PE_DATA[lineType][peKey] || 0.165;
   const vRel = current * 0.5144 * (1 - boatRatio / 100);
@@ -287,10 +290,17 @@ export default function SimulatorScreen() {
             style={[styles.btnGold, hasSaved && styles.btnGoldDisabled]}
             disabled={hasSaved}
             onPress={async () => {
-              setSaved({ dia, sinker, vRel, depth });
-              setHasSaved(true);
-              await saveUserSetting({ lineType, peKey, dia, sinker });
-            }}>
+  setSaved({ dia, sinker, vRel, depth });
+  setHasSaved(true);
+  await saveUserSetting({ lineType, peKey, dia, sinker });
+
+  // 광고 하루 1회 체크
+  const show = await shouldShowAd(AD_KEY_SETTINGS);
+  if (show) {
+    await markAdShown(AD_KEY_SETTINGS);
+    setAdVisible(true);
+  }
+}}>
             <Text style={[styles.btnGoldText, hasSaved && styles.btnTextDisabled]}>
               ⚓ 내 세팅 저장
             </Text>
@@ -312,8 +322,14 @@ export default function SimulatorScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+      </ScrollView>  
 
-      </ScrollView>
+      <AdModal       
+        visible={adVisible}
+        storagePathOrUrl="ads/settings_save.jpg"
+        onClose={() => setAdVisible(false)}
+      />
+
     </View>
   );
 }

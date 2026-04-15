@@ -1,21 +1,41 @@
-import { View, Text, StyleSheet, ScrollView, Switch, AppState } from 'react-native'; // 👈 AppState 추가
-import { useState, useEffect } from 'react'; // 👈 useEffect 추가
+import { View, Text, StyleSheet, ScrollView, Switch, AppState } from 'react-native';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '@/store/useAppStore';
 import { startFloatingButton, stopFloatingButton, updateFloatingItems } from '@/lib/FloatingService';
+import AdModal from '@/components/AdModal';
+import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
+
+const TOGGLE_KEY = 'floating_enabled';
 
 export default function SettingsScreen() {
   const { boatRatio, setBoatRatio } = useAppStore();
   const [floatingEnabled, setFloatingEnabled] = useState(false);
+  const [adVisible, setAdVisible] = useState(false);
+
+  // [토글 상태 복원] 앱 시작 시 저장된 토글 상태 불러오기
+  useEffect(() => {
+    const loadToggleState = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(TOGGLE_KEY);
+        if (stored === 'true') {
+          setFloatingEnabled(true);
+        }
+      } catch (e) {
+        console.log('토글 상태 불러오기 오류:', e);
+      }
+    };
+    loadToggleState();
+  }, []);
 
   // 권한 설정 화면 갔다가 앱으로 돌아올 때 자동으로 서비스 시작 재시도
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (state) => {
       if (state !== 'active') return;
-      if (!floatingEnabled) return; // 토글이 켜져있을 때만
+      if (!floatingEnabled) return;
 
       try {
         await startFloatingButton();
-        // 서비스 시작 성공 시 현재 데이터 push
         const { items, curId } = useAppStore.getState();
         const idx = items.findIndex((i: any) => i.id === curId);
         updateFloatingItems(
@@ -25,8 +45,8 @@ export default function SettingsScreen() {
         );
       } catch (e: any) {
         if (e.code === 'NO_PERMISSION') {
-          // 권한 거부하고 돌아온 경우 → 토글 자동으로 끄기
           setFloatingEnabled(false);
+          await AsyncStorage.setItem(TOGGLE_KEY, 'false'); // 권한 거부 시 저장도 false로
         }
       }
     });
@@ -84,10 +104,20 @@ export default function SettingsScreen() {
             <Switch
               value={floatingEnabled}
               onValueChange={async (value) => {
+                // [토글 상태 저장] 변경할 때마다 AsyncStorage에 저장
+                await AsyncStorage.setItem(TOGGLE_KEY, value.toString());
+
                 if (value) {
                   setFloatingEnabled(true);
+
+                  // 광고 하루 1회 체크
+                  const show = await shouldShowAd(AD_KEY_FLOATING);
+                  if (show) {
+                    await markAdShown(AD_KEY_FLOATING);
+                    setAdVisible(true);
+                  }
+
                   await startFloatingButton();
-                  // 서비스 시작 직후 현재 데이터 즉시 push
                   const { items, curId } = useAppStore.getState();
                   const idx = items.findIndex((i: any) => i.id === curId);
                   updateFloatingItems(
@@ -150,6 +180,13 @@ export default function SettingsScreen() {
         </View>
 
       </ScrollView>
+
+      <AdModal
+        visible={adVisible}
+        storagePathOrUrl="ads/floating_start.jpg"
+        onClose={() => setAdVisible(false)}
+      />
+
     </View>
   );
 }
