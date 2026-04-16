@@ -1,4 +1,4 @@
-package com.teamrich.fishline2
+package com.richcompany.fishlineapp
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

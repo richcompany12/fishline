@@ -1,4 +1,4 @@
-package com.teamrich.fishline2
+package com.richcompany.fishlineapp
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -40,10 +40,10 @@ class FloatingButtonService : Service() {
 
     companion object {
         const val CHANNEL_ID = "fishline_floating"
-        const val ACTION_UPDATE_ITEMS = "com.teamrich.fishline2.UPDATE_ITEMS"
-        const val ACTION_SYNC_COUNT   = "com.teamrich.fishline2.SYNC_COUNT"
-        const val ACTION_GET_ITEMS    = "com.teamrich.fishline2.GET_ITEMS"
-        const val ACTION_RETURN_ITEMS = "com.teamrich.fishline2.RETURN_ITEMS"
+        const val ACTION_UPDATE_ITEMS = "com.richcompany.fishlineapp.UPDATE_ITEMS"
+        const val ACTION_SYNC_COUNT   = "com.richcompany.fishlineapp.SYNC_COUNT"
+        const val ACTION_GET_ITEMS    = "com.richcompany.fishlineapp.GET_ITEMS"
+        const val ACTION_RETURN_ITEMS = "com.richcompany.fishlineapp.RETURN_ITEMS"
         const val EXTRA_ITEMS    = "items"
         const val EXTRA_SELECTED = "selected"
         const val EXTRA_COUNT_ONLY = "countOnly"

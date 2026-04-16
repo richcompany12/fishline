@@ -1,0 +1,78 @@
+ 개인정보 처리방침
+https://fishline-9e984.web.app/privacy-policy.html
+
+FISHLINE 앱 설명 작성해드릴게요!
+
+한국어 (짧은 설명 - 80자 이내)
+선상낚시인을 위한 낚싯줄 시뮬레이터 & 마릿수 카운터
+조류, 수심, PE 라인별 낚싯줄 휨 곡선을 실시간으로 확인하세요!
+
+한국어 (긴 설명 - 4000자 이내)
+
+🎣 FISHLINE — LINE SIMULATOR PRO
+
+선상낚시인이라면 꼭 필요한 필수 앱!
+조류 속도와 수심에 따라 내 낚싯줄이 어떻게 휘는지
+출조 전에 미리 시뮬레이션해보세요.
+
+━━━━━━━━━━━━━━━━
+📐 라인 시뮬레이터
+━━━━━━━━━━━━━━━━
+- PE 호수별 라인 특성 반영 (일본합사/미국합사/알리합사)
+- 봉돌 무게, 조류 속도, 수심 조절
+- 실시간 낚싯줄 휨 곡선 시각화
+- 봉돌 드리프트 거리 및 각도 표시
+- 내 세팅 저장 기능
+
+━━━━━━━━━━━━━━━━
+🐟 마릿수 카운터
+━━━━━━━━━━━━━━━━
+- 어종별 마릿수 기록
+- 낚시 중 다른 앱 위에 떠있는 플로팅 카운터
+- 원터치로 빠르게 카운트
+- 최근 기록 자동 저장
+
+━━━━━━━━━━━━━━━━
+⚡ 플로팅 버튼 (핵심 기능!)
+━━━━━━━━━━━━━━━━
+- 낚시 중 다른 앱 사용하면서도 카운트 가능
+- 화면 어디든 자유롭게 이동
+- 항목별 마릿수 실시간 동기화
+
+블랙 & 골드 프리미엄 디자인으로
+선상낚시의 격을 높여보세요. 🖤💛
+
+
+English (Short)
+
+
+Line simulator & catch counter for boat fishing.
+Visualize fishing line curves by current, depth & PE line type!
+
+English (Long)
+
+🎣 FISHLINE — LINE SIMULATOR PRO
+
+The essential app for boat fishing enthusiasts!
+Simulate how your fishing line bends based on current speed
+and water depth before you even hit the water.
+
+📐 LINE SIMULATOR
+- PE line characteristics by type (Japanese/US/Generic)
+- Adjust sinker weight, current speed & water depth
+- Real-time fishing line curve visualization
+- Sinker drift distance & angle display
+- Save your personal settings
+
+🐟 CATCH COUNTER
+- Record catches by species
+- Floating counter overlay — count while using other apps
+- One-tap quick counting
+- Auto-save recent records
+
+⚡ FLOATING BUTTON
+- Count catches without leaving your current app
+- Drag anywhere on screen
+- Real-time sync with main app
+
+Premium Black & Gold design for the serious angler. 🖤💛

@@ -1,4 +1,4 @@
-package com.teamrich.fishline2
+package com.richcompany.fishlineapp
 
 import android.content.Intent
 import android.net.Uri

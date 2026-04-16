@@ -1,4 +1,4 @@
-package com.teamrich.fishline2
+package com.richcompany.fishlineapp
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

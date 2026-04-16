@@ -1,0 +1,22 @@
+오늘 작업 정리 (2026-04-16)
+✅ 완료된 것들
+항목내용구글 플레이 계정신규 등록 + 본인인증 (건강보험 납부확인서) → 심사 대기 중개인정보처리방침한/영 블랙골드 HTML 제작 → Firebase Hosting 배포 완료릴리즈 키스토어fishline-release.keystore 생성 (alias: fishline, C=KR)build.gradle 수정release 서명 설정 완료 (debug → release 키로 교체)릴리즈 APKapp-release.apk 빌드 완료 + release 키 서명 확인피처드 이미지1024x500px 채실장 제작 완료 🖤💛앱 아이콘512x512px android-chrome-512x512.png 준비 완료앱 설명한/영 짧은설명 + 긴설명 작성 완료
+
+⏳ 대기 중
+
+구글 플레이 계정 승인 (1~3일)
+AdMob 계정 승인 (24시간~)
+
+
+📋 재개 시 할 것
+1. 스크린샷 최소 2장 준비
+2. 구글 플레이 계정 승인 확인
+3. 플레이 콘솔에서 FISHLINE 앱 등록
+4. AdMob 앱 연결 + 배너 광고 코드 연동
+5. 최종 심사 제출
+
+
+🔐 키스토어 비밀번호 꼭 안전한 곳에 보관하세요!
+fishline-release.keystore 파일도 백업 필수!
+
+파일백업여부 물어봐줄것!!

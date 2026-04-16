@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FISHLINE — 개인정보처리방침 / Privacy Policy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dim: #8B6914;
+    --black: #0A0A0A;
+    --black-soft: #111111;
+    --black-card: #161616;
+    --black-border: #2A2A2A;
+    --text-primary: #F0E6CC;
+    --text-secondary: #A89060;
+    --text-body: #C8B888;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text-body);
+    font-family: 'Noto Sans KR', 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+
+  /* 배경 텍스처 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(201,168,76,0.015) 80px, rgba(201,168,76,0.015) 81px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* 헤더 */
+  header {
+    text-align: center;
+    padding: 60px 0 50px;
+    border-bottom: 1px solid var(--black-border);
+    margin-bottom: 50px;
+    position: relative;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .app-icon {
+    font-size: 36px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+  }
+
+  .app-title {
+    font-family: 'Cinzel', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 6px;
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+  }
+
+  .app-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold-dim);
+    margin-top: 6px;
+  }
+
+  .doc-title {
+    margin-top: 28px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .effective-date {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--gold-dim);
+  }
+
+  /* 언어 탭 */
+  .lang-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    border: 1px solid var(--black-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .lang-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    background: var(--black-card);
+    color: var(--text-secondary);
+    border: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  .lang-tab.active {
+    background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
+    color: var(--gold-light);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .lang-content { display: none; }
+  .lang-content.active { display: block; }
+
+  /* 섹션 */
+  .section {
+    background: var(--black-card);
+    border: 1px solid var(--black-border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--gold), transparent);
+  }
+
+  .section-num {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--gold-dim);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gold-light);
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  .section p {
+    font-size: 13.5px;
+    color: var(--text-body);
+    margin-bottom: 10px;
+    line-height: 1.9;
+  }
+
+  .section p:last-child { margin-bottom: 0; }
+
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  .info-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    font-weight: 500;
+    border-bottom: 1px solid var(--black-border);
+    letter-spacing: 0.5px;
+  }
+
+  .info-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-body);
+    vertical-align: top;
+  }
+
+  .info-table tr:last-child td { border-bottom: none; }
+
+  .highlight {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* 연락처 */
+  .contact-box {
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.03));
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .contact-box .title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .contact-box a {
+    color: var(--gold-light);
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .contact-box a:hover { text-decoration: underline; }
+
+  /* 하단 */
+  footer {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid var(--black-border);
+    font-size: 11px;
+    color: var(--gold-dim);
+    letter-spacing: 2px;
+    font-family: 'Cinzel', serif;
+  }
+
+  @media (max-width: 600px) {
+    .app-title { font-size: 24px; letter-spacing: 4px; }
+    .section { padding: 20px; }
+    .info-table th, .info-table td { padding: 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="app-icon">🎣</div>
+    <div class="app-title">FISHLINE</div>
+    <div class="app-subtitle">LINE SIMULATOR PRO</div>
+    <div class="doc-title">개인정보처리방침 · Privacy Policy</div>
+    <div class="effective-date">시행일 · Effective Date: 2026년 4월 16일</div>
+  </header>
+
+  <div class="lang-tabs">
+    <button class="lang-tab active" onclick="switchLang('ko')">한국어</button>
+    <button class="lang-tab" onclick="switchLang('en')">English</button>
+  </div>
+
+  <!-- 한국어 -->
+  <div id="lang-ko" class="lang-content active">
+
+    <div class="section">
+      <div class="section-num">ARTICLE 01</div>
+      <div class="section-title">개인정보처리방침 개요</div>
+      <p>팀리치(이하 "운영자")는 FISHLINE 앱(이하 "앱") 이용자의 개인정보를 중요하게 생각하며, 「개인정보 보호법」 및 관련 법령을 준수합니다.</p>
+      <p>본 방침은 운영자가 제공하는 FISHLINE 서비스에 적용됩니다.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 02</div>
+      <div class="section-title">수집하는 개인정보 항목</div>
+      <table class="info-table">
+        <tr>
+          <th>수집 항목</th>
+          <th>수집 목적</th>
+          <th>수집 방법</th>
+        </tr>
+        <tr>
+          <td>Google 계정 이메일, 이름, 프로필 사진</td>
+          <td>로그인 및 회원 식별</td>
+          <td>Google 로그인</td>
+        </tr>
+        <tr>
+          <td>낚시 카운터 데이터 (어종, 마릿수)</td>
+          <td>기록 저장 및 동기화</td>
+          <td>앱 내 입력</td>
+        </tr>
+        <tr>
+          <td>시뮬레이터 설정값 (PE 호수, 봉돌 무게 등)</td>
+          <td>개인 세팅 저장</td>
+          <td>앱 내 입력</td>
+        </tr>
+        <tr>
+          <td>기기 정보 (OS 버전, 기기 식별자)</td>
+          <td>서비스 품질 향상</td>
+          <td>자동 수집</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 03</div>
+      <div class="section-title">개인정보 수집 및 이용 목적</div>
+      <p>수집된 개인정보는 다음 목적으로만 이용됩니다:</p>
+      <p>① 서비스 제공 및 회원 관리 (로그인, 데이터 동기화)</p>
+      <p>② 앱 기능 개선 및 서비스 품질 향상</p>
+      <p>③ 광고 서비스 제공 (Google AdMob)</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 04</div>
+      <div class="section-title">개인정보 보유 및 이용 기간</div>
+      <p>이용자의 개인정보는 서비스 이용 기간 동안 보유되며, 회원 탈퇴 시 즉시 삭제됩니다.</p>
+      <p>단, 관계 법령에 의해 보존이 필요한 경우 해당 기간 동안 보관됩니다.</p>
+      <div class="highlight">
+        🗑️ 데이터 삭제 요청: 앱 내 설정 화면에서 탈퇴 또는 아래 이메일로 요청하시면 즉시 처리됩니다.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 05</div>
+      <div class="section-title">제3자 제공 및 위탁</div>
+      <p>운영자는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다.</p>
+      <p>단, 다음 서비스에는 서비스 운영을 위해 데이터가 처리될 수 있습니다:</p>
+      <table class="info-table">
+        <tr>
+          <th>수탁 업체</th>
+          <th>처리 목적</th>
+        </tr>
+        <tr>
+          <td>Google Firebase (Google LLC)</td>
+          <td>인증, 데이터베이스, 스토리지</td>
+        </tr>
+        <tr>
+          <td>Google AdMob (Google LLC)</td>
+          <td>광고 서비스 제공</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 06</div>
+      <div class="section-title">광고 및 데이터 수집</div>
+      <p>본 앱은 Google AdMob을 통해 광고를 제공합니다. Google은 광고 최적화를 위해 기기 식별자 등의 데이터를 수집할 수 있습니다.</p>
+      <p>광고 개인화를 원하지 않는 경우, 기기의 광고 설정에서 개인화 광고를 비활성화하실 수 있습니다.</p>
+      <p>Google의 개인정보처리방침: <a href="https://policies.google.com/privacy" style="color:var(--gold-light)">policies.google.com/privacy</a></p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 07</div>
+      <div class="section-title">이용자의 권리</div>
+      <p>이용자는 언제든지 다음 권리를 행사할 수 있습니다:</p>
+      <p>① 개인정보 열람 요청</p>
+      <p>② 개인정보 수정·삭제 요청</p>
+      <p>③ 개인정보 처리 정지 요청</p>
+      <p>④ 서비스 탈퇴 및 계정 삭제 요청</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 08</div>
+      <div class="section-title">개인정보 보호책임자</div>
+      <p>개인정보 관련 문의, 불만 처리, 피해 구제 등에 관한 사항은 아래 담당자에게 연락해 주시기 바랍니다.</p>
+    </div>
+
+    <div class="contact-box">
+      <div class="title">CONTACT · 문의처</div>
+      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:8px;">팀리치 (FISHLINE 개발팀)</p>
+      <a href="mailto:kso121258@gmail.com">kso121258@gmail.com</a>
+    </div>
+
+  </div>
+
+  <!-- English -->
+  <div id="lang-en" class="lang-content">
+
+    <div class="section">
+      <div class="section-num">ARTICLE 01</div>
+      <div class="section-title">Overview</div>
+      <p>Team Rich ("we", "us", or "our") operates the FISHLINE mobile application (the "App"). We respect your privacy and are committed to protecting your personal data in accordance with applicable laws.</p>
+      <p>This Privacy Policy explains how we collect, use, and safeguard your information when you use FISHLINE.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 02</div>
+      <div class="section-title">Information We Collect</div>
+      <table class="info-table">
+        <tr>
+          <th>Data</th>
+          <th>Purpose</th>
+          <th>Method</th>
+        </tr>
+        <tr>
+          <td>Google account email, name, profile photo</td>
+          <td>Authentication & user identification</td>
+          <td>Google Sign-In</td>
+        </tr>
+        <tr>
+          <td>Catch counter data (species, count)</td>
+          <td>Data storage & sync</td>
+          <td>In-app input</td>
+        </tr>
+        <tr>
+          <td>Simulator settings (PE line, sinker weight, etc.)</td>
+          <td>Personal settings storage</td>
+          <td>In-app input</td>
+        </tr>
+        <tr>
+          <td>Device info (OS version, device identifier)</td>
+          <td>Service quality improvement</td>
+          <td>Automatic collection</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 03</div>
+      <div class="section-title">How We Use Your Information</div>
+      <p>We use the collected information solely for the following purposes:</p>
+      <p>① Providing and managing the service (login, data synchronization)</p>
+      <p>② Improving app functionality and service quality</p>
+      <p>③ Delivering advertising services via Google AdMob</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 04</div>
+      <div class="section-title">Data Retention</div>
+      <p>Your personal data is retained for as long as you use the service. Upon account deletion, your data will be immediately removed from our systems.</p>
+      <div class="highlight">
+        🗑️ To request data deletion, use the settings screen in the app or contact us via email below.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 05</div>
+      <div class="section-title">Third-Party Services</div>
+      <p>We do not sell or share your personal data with third parties without your consent. However, we use the following services that may process your data:</p>
+      <table class="info-table">
+        <tr>
+          <th>Service</th>
+          <th>Purpose</th>
+        </tr>
+        <tr>
+          <td>Google Firebase (Google LLC)</td>
+          <td>Authentication, database, storage</td>
+        </tr>
+        <tr>
+          <td>Google AdMob (Google LLC)</td>
+          <td>Advertising services</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 06</div>
+      <div class="section-title">Advertising</div>
+      <p>This app uses Google AdMob to serve advertisements. Google may collect device identifiers and other data for ad personalization.</p>
+      <p>You may opt out of personalized ads by adjusting your device's ad settings.</p>
+      <p>Google's Privacy Policy: <a href="https://policies.google.com/privacy" style="color:var(--gold-light)">policies.google.com/privacy</a></p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 07</div>
+      <div class="section-title">Your Rights</div>
+      <p>You have the right to:</p>
+      <p>① Access your personal data</p>
+      <p>② Request correction or deletion of your data</p>
+      <p>③ Request restriction of data processing</p>
+      <p>④ Delete your account and all associated data</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">ARTICLE 08</div>
+      <div class="section-title">Contact Us</div>
+      <p>For any privacy-related questions, complaints, or requests, please contact us:</p>
+    </div>
+
+    <div class="contact-box">
+      <div class="title">CONTACT</div>
+      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:8px;">Team Rich (FISHLINE Dev Team)</p>
+      <a href="mailto:kso121258@gmail.com">kso121258@gmail.com</a>
+    </div>
+
+  </div>
+
+  <footer>
+    FISHLINE · LINE SIMULATOR PRO · © 2026 TEAM RICH
+  </footer>
+
+</div>
+
+<script>
+  function switchLang(lang) {
+    document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('lang-' + lang).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
