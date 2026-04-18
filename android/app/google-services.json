@@ -1,0 +1,108 @@
+{
+  "project_info": {
+    "project_number": "257296302870",
+    "project_id": "fishline-9e984",
+    "storage_bucket": "fishline-9e984.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:257296302870:android:74e051a2d79afb73090637",
+        "android_client_info": {
+          "package_name": "com.richcompany.fishlineapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "257296302870-c2dfgt5askdlh304p35vup06grejj2sh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.richcompany.fishlineapp",
+            "certificate_hash": "6e4352d8d6d1534d732a6a17ad02661c1c61885b"
+          }
+        },
+        {
+          "client_id": "257296302870-jd7e4apvnr6gpsjukmm55s1vcgdko3t5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.richcompany.fishlineapp",
+            "certificate_hash": "413b5394591519f47546dd2245338b63016b1e22"
+          }
+        },
+        {
+          "client_id": "257296302870-j1jqungq9l6vj3cqv86psvf5e9md28dk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1e_6vZRPa3g1y1XTRf6laXT8NASaS4lI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "257296302870-j1jqungq9l6vj3cqv86psvf5e9md28dk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:257296302870:android:1d6c3ecb5fc76970090637",
+        "android_client_info": {
+          "package_name": "com.teamrich.fishline2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "257296302870-099k1n3pgmplqakuq5odgc4old1nclr0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamrich.fishline2",
+            "certificate_hash": "413b5394591519f47546dd2245338b63016b1e22"
+          }
+        },
+        {
+          "client_id": "257296302870-aq12k6nora7jarid5pqhicbcrm6a1af7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamrich.fishline2",
+            "certificate_hash": "6e4352d8d6d1534d732a6a17ad02661c1c61885b"
+          }
+        },
+        {
+          "client_id": "257296302870-hq93h0e6cp8i2uj7ueh08pfokfl72d34.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamrich.fishline2",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "257296302870-j1jqungq9l6vj3cqv86psvf5e9md28dk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1e_6vZRPa3g1y1XTRf6laXT8NASaS4lI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "257296302870-j1jqungq9l6vj3cqv86psvf5e9md28dk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
