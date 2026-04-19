@@ -96,4 +96,24 @@ fun updateItems(itemsJson: String, selectedIndex: Int, countOnlyUpdate: Boolean)
         e.printStackTrace()
     }
 }
+
+   /**
+     * [v1.0.1 추가] JS → 서비스로 플로팅 버튼 스타일(크기+색상) 변경 브로드캐스트.
+     * settings.tsx에서 사용자가 크기/색상 변경 시 호출.
+     * @param size "S" | "M" | "L"
+     * @param color "GOLD" | "BLUE" | "RED"
+     */
+    @ReactMethod
+    fun updateStyle(size: String, color: String) {
+        try {
+            val intent = Intent(FloatingButtonService.ACTION_UPDATE_STYLE).apply {
+                putExtra(FloatingButtonService.EXTRA_SIZE, size)
+                putExtra(FloatingButtonService.EXTRA_COLOR, color)
+                setPackage(reactContext.packageName)
+            }
+            reactContext.sendBroadcast(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

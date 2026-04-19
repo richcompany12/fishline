@@ -5,8 +5,9 @@
  * 수정 내용:
  * - getFloatingItems: 에러 시 null 반환 유지, 타입 명확화
  * - listenFloatingSyncCount: [BUG7 수정] 플로팅 버튼 탭 시 JS로 실시간 이벤트 수신
+ * - updateFloatingStyle: 버튼 크기/색상 변경 (v1.0.1 추가)
  */
-
+ 
 import {
   NativeModules,
   Platform,
@@ -14,21 +15,25 @@ import {
   DeviceEventEmitter,
   EmitterSubscription,
 } from 'react-native';
-
+ 
 export type FloatItem = {
   name: string;
   count: number;
 };
-
+ 
 export type FloatState = {
   items: FloatItem[];
   selected: number;
 };
-
+ 
+// v1.0.1 추가: 스타일 타입
+export type FloatSize = 'S' | 'M' | 'L';
+export type FloatColor = 'GOLD' | 'BLUE' | 'RED';
+ 
 // ─────────────────────────────────────────────
 // 서비스 시작 / 중지
 // ─────────────────────────────────────────────
-
+ 
 export async function startFloatingButton(): Promise<void> {
   if (Platform.OS !== 'android') return;
   if (!NativeModules.FloatingButtonModule) {
@@ -48,7 +53,7 @@ export async function startFloatingButton(): Promise<void> {
     }
   }
 }
-
+ 
 export async function stopFloatingButton(): Promise<void> {
   if (Platform.OS !== 'android') return;
   if (!NativeModules.FloatingButtonModule) return;
@@ -58,11 +63,11 @@ export async function stopFloatingButton(): Promise<void> {
     console.log('[FloatingService] stopService 오류:', e);
   }
 }
-
+ 
 // ─────────────────────────────────────────────
 // 앱 → 서비스: 항목 갱신
 // ─────────────────────────────────────────────
-
+ 
 /**
  * 앱의 현재 items 상태를 플로팅 버튼 서비스로 전송.
  * counter.tsx의 useEffect([items, curId]) 에서 호출.
@@ -70,7 +75,7 @@ export async function stopFloatingButton(): Promise<void> {
 export function updateFloatingItems(
   items: FloatItem[],
   selectedIndex: number,
-  countOnlyUpdate: boolean = false  // 추가
+  countOnlyUpdate: boolean = false
 ): void {
   if (Platform.OS !== 'android') return;
   if (!NativeModules.FloatingButtonModule) return;
@@ -81,11 +86,32 @@ export function updateFloatingItems(
     console.log('[FloatingService] updateItems 오류:', e);
   }
 }
-
+ 
+// ─────────────────────────────────────────────
+// v1.0.1 추가: 앱 → 서비스: 스타일 변경
+// ─────────────────────────────────────────────
+ 
+/**
+ * 플로팅 버튼의 크기와 색상을 변경.
+ * 설정 화면에서 사용자가 변경할 때 호출.
+ */
+export function updateFloatingStyle(
+  size: FloatSize,
+  color: FloatColor
+): void {
+  if (Platform.OS !== 'android') return;
+  if (!NativeModules.FloatingButtonModule) return;
+  try {
+    NativeModules.FloatingButtonModule.updateStyle(size, color);
+  } catch (e) {
+    console.log('[FloatingService] updateStyle 오류:', e);
+  }
+}
+ 
 // ─────────────────────────────────────────────
 // 서비스 → 앱: 현재 상태 읽기 (풀링 방식)
 // ─────────────────────────────────────────────
-
+ 
 /**
  * 서비스의 현재 items/selected 값을 읽어옴.
  * 앱이 포그라운드로 돌아올 때(AppState active) 최종 상태 동기화에 사용.
@@ -102,21 +128,14 @@ export async function getFloatingItems(): Promise<FloatState | null> {
     return null;
   }
 }
-
+ 
 // ─────────────────────────────────────────────
 // 서비스 → 앱: 실시간 이벤트 리스너 (push 방식)
 // ─────────────────────────────────────────────
-
+ 
 /**
  * [BUG7 수정] 플로팅 버튼에서 카운트가 변경될 때마다 서비스가 emit하는
  * 'FloatingSyncCount' 이벤트를 수신.
- * counter.tsx useEffect 에서 구독 → 컴포넌트 언마운트 시 반환된 sub.remove() 호출.
- *
- * 사용 예:
- *   const sub = listenFloatingSyncCount((state) => {
- *     // state.items, state.selected 로 스토어 업데이트
- *   });
- *   return () => sub.remove();
  */
 export function listenFloatingSyncCount(
   callback: (state: FloatState) => void
@@ -124,13 +143,13 @@ export function listenFloatingSyncCount(
   return DeviceEventEmitter.addListener('FloatingSyncCount', (rawJson: string) => {
     try {
       const items: FloatItem[] = JSON.parse(rawJson || '[]');
-      callback({ items, selected: 0 }); // selected는 items 인덱스로 앱에서 재계산
+      callback({ items, selected: 0 });
     } catch (e) {
       console.log('[FloatingService] FloatingSyncCount 파싱 오류:', e);
     }
   });
 }
-
+ 
 export function listenFloatingServiceStarted(
   callback: () => void
 ): EmitterSubscription {

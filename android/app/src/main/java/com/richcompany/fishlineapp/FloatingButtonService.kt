@@ -38,56 +38,66 @@ class FloatingButtonService : Service() {
     private lateinit var floatParams: WindowManager.LayoutParams
     private lateinit var panelParams: WindowManager.LayoutParams
 
-    companion object {
-        const val CHANNEL_ID = "fishline_floating"
-        const val ACTION_UPDATE_ITEMS = "com.richcompany.fishlineapp.UPDATE_ITEMS"
-        const val ACTION_SYNC_COUNT   = "com.richcompany.fishlineapp.SYNC_COUNT"
-        const val ACTION_GET_ITEMS    = "com.richcompany.fishlineapp.GET_ITEMS"
-        const val ACTION_RETURN_ITEMS = "com.richcompany.fishlineapp.RETURN_ITEMS"
-        const val EXTRA_ITEMS    = "items"
-        const val EXTRA_SELECTED = "selected"
-        const val EXTRA_COUNT_ONLY = "countOnly"
+companion object {
+    const val CHANNEL_ID = "fishline_floating"
+    const val ACTION_UPDATE_ITEMS = "com.richcompany.fishlineapp.UPDATE_ITEMS"
+    const val ACTION_SYNC_COUNT   = "com.richcompany.fishlineapp.SYNC_COUNT"
+    const val ACTION_GET_ITEMS    = "com.richcompany.fishlineapp.GET_ITEMS"
+    const val ACTION_RETURN_ITEMS = "com.richcompany.fishlineapp.RETURN_ITEMS"
+    const val ACTION_UPDATE_STYLE = "com.richcompany.fishlineapp.UPDATE_STYLE"
+    const val EXTRA_ITEMS    = "items"
+    const val EXTRA_SELECTED = "selected"
+    const val EXTRA_COUNT_ONLY = "countOnly"
+    const val EXTRA_SIZE  = "size"   // S/M/L
+    const val EXTRA_COLOR = "color"  // GOLD/BLUE/RED
 
-        // static 보관 → getItems() 에서 접근
-        var currentItemsJson: String = "[]"
-        var currentSelectedIndex: Int = 0
-    }
+    // static 보관 → getItems() 에서 접근
+    var currentItemsJson: String = "[]"
+    var currentSelectedIndex: Int = 0
+    var currentSize: String = "M"
+    var currentColor: String = "GOLD"
+}
 
     // ─────────────────────────────────────────────
     // BroadcastReceiver: 앱 → 서비스 데이터 수신
     // ─────────────────────────────────────────────
-    private val updateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-               ACTION_UPDATE_ITEMS -> {
-    val json = intent.getStringExtra(EXTRA_ITEMS) ?: return
-    val countOnly = intent.getBooleanExtra(EXTRA_COUNT_ONLY, false)
-    val arr = JSONArray(json)
-    items.clear()
-    for (i in 0 until arr.length()) {
-        val obj = arr.getJSONObject(i)
-        items.add(Pair(obj.getString("name"), obj.getInt("count")))
-    }
-    // countOnly = true면 selectedIndex 건드리지 않음!
-    if (!countOnly) {
-        selectedIndex = intent.getIntExtra(EXTRA_SELECTED, 0)
-    }
-    saveCurrentState()
-    updateMainButton()
-    if (isPanelVisible) updateMiniPanel()
-}
-                ACTION_GET_ITEMS -> {
-                    // 앱에서 풀링 방식으로 요청 시 응답
-                    val returnIntent = Intent(ACTION_RETURN_ITEMS).apply {
-                        putExtra(EXTRA_ITEMS, currentItemsJson)
-                        putExtra(EXTRA_SELECTED, currentSelectedIndex)
-                        setPackage(packageName)
-                    }
-                    sendBroadcast(returnIntent)
+ private val updateReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        when (intent.action) {
+           ACTION_UPDATE_ITEMS -> {
+                val json = intent.getStringExtra(EXTRA_ITEMS) ?: return
+                val countOnly = intent.getBooleanExtra(EXTRA_COUNT_ONLY, false)
+                val arr = JSONArray(json)
+                items.clear()
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    items.add(Pair(obj.getString("name"), obj.getInt("count")))
                 }
+                if (!countOnly) {
+                    selectedIndex = intent.getIntExtra(EXTRA_SELECTED, 0)
+                }
+                saveCurrentState()
+                updateMainButton()
+                if (isPanelVisible) updateMiniPanel()
+            }
+            ACTION_GET_ITEMS -> {
+                val returnIntent = Intent(ACTION_RETURN_ITEMS).apply {
+                    putExtra(EXTRA_ITEMS, currentItemsJson)
+                    putExtra(EXTRA_SELECTED, currentSelectedIndex)
+                    setPackage(packageName)
+                }
+                sendBroadcast(returnIntent)
+            }
+            ACTION_UPDATE_STYLE -> {
+                val size = intent.getStringExtra(EXTRA_SIZE) ?: "M"
+                val color = intent.getStringExtra(EXTRA_COLOR) ?: "GOLD"
+                currentSize = size
+                currentColor = color
+                applyStyleToFloatingButton()
             }
         }
     }
+}
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -109,10 +119,11 @@ class FloatingButtonService : Service() {
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        val filter = IntentFilter().apply {
-            addAction(ACTION_UPDATE_ITEMS)
-            addAction(ACTION_GET_ITEMS)
-        }
+       val filter = IntentFilter().apply {
+    addAction(ACTION_UPDATE_ITEMS)
+    addAction(ACTION_GET_ITEMS)
+    addAction(ACTION_UPDATE_STYLE)
+}
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(updateReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
@@ -191,8 +202,11 @@ private fun requestDataFromApp() {
 
         // 메인 카운터 버튼에만 터치(드래그+탭) 리스너 적용
         val mainCounterBtn = floatingView.findViewById<View>(R.id.main_counter_btn)
-        setupTouchListener(mainCounterBtn)
-    }
+setupTouchListener(mainCounterBtn)
+
+// 저장된 스타일 적용
+applyStyleToFloatingButton()
+}
 
     /**
      * [BUG2 수정] miniPanel은 inflate만 해두고 addView는 하지 않음.
@@ -361,6 +375,69 @@ private fun requestDataFromApp() {
             countText.text = "0"
         }
     }
+
+// ─────────────────────────────────────────────
+// 스타일 적용 (크기 + 색상)
+// ─────────────────────────────────────────────
+private fun applyStyleToFloatingButton() {
+    if (!::floatingView.isInitialized) return
+    
+    val density = resources.displayMetrics.density
+    
+    // 크기 dp 계산
+    val sizeDp = when (currentSize) {
+        "S" -> 48
+        "L" -> 96
+        else -> 72  // M 기본
+    }
+    val sizePx = (sizeDp * density).toInt()
+    
+    // 색상 hex
+    val colorHex = when (currentColor) {
+        "BLUE" -> "#4c88c9"
+        "RED"  -> "#c94c4c"
+        else   -> "#c9a84c"  // GOLD 기본
+    }
+    
+    // 메인 카운터 버튼에 적용
+    val mainBtn = floatingView.findViewById<View>(R.id.main_counter_btn)
+    mainBtn?.let {
+        val params = it.layoutParams
+        params.width = sizePx
+        params.height = sizePx
+        it.layoutParams = params
+        
+        try {
+            val drawable = it.background?.mutate() as? android.graphics.drawable.GradientDrawable
+            drawable?.setColor(Color.parseColor(colorHex))
+        } catch (e: Exception) {
+            it.setBackgroundColor(Color.parseColor(colorHex))
+        }
+    }
+    
+    // 텍스트 크기 비례 조정
+    val nameText = floatingView.findViewById<TextView>(R.id.float_name)
+    val countText = floatingView.findViewById<TextView>(R.id.float_count)
+    val nameSize = when (currentSize) {
+        "S" -> 8f
+        "L" -> 14f
+        else -> 11f
+    }
+    val countSize = when (currentSize) {
+        "S" -> 14f
+        "L" -> 26f
+        else -> 20f
+    }
+    nameText?.textSize = nameSize
+    countText?.textSize = countSize
+    
+    // WindowManager 업데이트
+    try {
+        windowManager.updateViewLayout(floatingView, floatParams)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
 
  private fun updateMiniPanel() {
     if (!::miniPanel.isInitialized) return

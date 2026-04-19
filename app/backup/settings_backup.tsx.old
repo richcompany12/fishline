@@ -1,47 +1,31 @@
-import { View, Text, StyleSheet, ScrollView, Switch, AppState, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, AppState } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '@/store/useAppStore';
-import { startFloatingButton, stopFloatingButton, updateFloatingItems, updateFloatingStyle, FloatSize, FloatColor } from '@/lib/FloatingService';
+import { startFloatingButton, stopFloatingButton, updateFloatingItems } from '@/lib/FloatingService';
 import AdModal from '@/components/AdModal';
 import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
 
 const TOGGLE_KEY = 'floating_enabled';
-const SIZE_KEY = 'floating_size';
-const COLOR_KEY = 'floating_color';
 
 export default function SettingsScreen() {
   const { boatRatio, setBoatRatio } = useAppStore();
   const [floatingEnabled, setFloatingEnabled] = useState(false);
   const [adVisible, setAdVisible] = useState(false);
-  
-  // v1.0.1 추가: 크기/색상 상태
-  const [floatSize, setFloatSize] = useState<FloatSize>('M');
-  const [floatColor, setFloatColor] = useState<FloatColor>('GOLD');
 
-  // [토글/스타일 상태 복원] 앱 시작 시 저장된 값 불러오기
+  // [토글 상태 복원] 앱 시작 시 저장된 토글 상태 불러오기
   useEffect(() => {
-    const loadStates = async () => {
+    const loadToggleState = async () => {
       try {
         const stored = await AsyncStorage.getItem(TOGGLE_KEY);
         if (stored === 'true') {
           setFloatingEnabled(true);
         }
-        
-        const storedSize = await AsyncStorage.getItem(SIZE_KEY);
-        if (storedSize === 'S' || storedSize === 'M' || storedSize === 'L') {
-          setFloatSize(storedSize);
-        }
-        
-        const storedColor = await AsyncStorage.getItem(COLOR_KEY);
-        if (storedColor === 'GOLD' || storedColor === 'BLUE' || storedColor === 'RED') {
-          setFloatColor(storedColor);
-        }
       } catch (e) {
-        console.log('설정 불러오기 오류:', e);
+        console.log('토글 상태 불러오기 오류:', e);
       }
     };
-    loadStates();
+    loadToggleState();
   }, []);
 
   // 권한 설정 화면 갔다가 앱으로 돌아올 때 자동으로 서비스 시작 재시도
@@ -59,35 +43,15 @@ export default function SettingsScreen() {
           idx >= 0 ? idx : 0,
           false
         );
-        // v1.0.1: 스타일도 재적용
-        updateFloatingStyle(floatSize, floatColor);
       } catch (e: any) {
         if (e.code === 'NO_PERMISSION') {
           setFloatingEnabled(false);
-          await AsyncStorage.setItem(TOGGLE_KEY, 'false');
+          await AsyncStorage.setItem(TOGGLE_KEY, 'false'); // 권한 거부 시 저장도 false로
         }
       }
     });
     return () => sub.remove();
-  }, [floatingEnabled, floatSize, floatColor]);
-
-  // v1.0.1: 크기 변경 핸들러
-  const handleSizeChange = async (size: FloatSize) => {
-    setFloatSize(size);
-    await AsyncStorage.setItem(SIZE_KEY, size);
-    if (floatingEnabled) {
-      updateFloatingStyle(size, floatColor);
-    }
-  };
-
-  // v1.0.1: 색상 변경 핸들러
-  const handleColorChange = async (color: FloatColor) => {
-    setFloatColor(color);
-    await AsyncStorage.setItem(COLOR_KEY, color);
-    if (floatingEnabled) {
-      updateFloatingStyle(floatSize, color);
-    }
-  };
+  }, [floatingEnabled]);
 
   return (
     <View style={styles.container}>
@@ -140,11 +104,13 @@ export default function SettingsScreen() {
             <Switch
               value={floatingEnabled}
               onValueChange={async (value) => {
+                // [토글 상태 저장] 변경할 때마다 AsyncStorage에 저장
                 await AsyncStorage.setItem(TOGGLE_KEY, value.toString());
 
                 if (value) {
                   setFloatingEnabled(true);
 
+                  // 광고 하루 1회 체크
                   const show = await shouldShowAd(AD_KEY_FLOATING);
                   if (show) {
                     await markAdShown(AD_KEY_FLOATING);
@@ -159,8 +125,6 @@ export default function SettingsScreen() {
                     idx >= 0 ? idx : 0,
                     false
                   );
-                  // v1.0.1: 저장된 스타일 적용
-                  updateFloatingStyle(floatSize, floatColor);
                 } else {
                   setFloatingEnabled(false);
                   await stopFloatingButton();
@@ -177,85 +141,17 @@ export default function SettingsScreen() {
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 ✅ 활성화됐어요!{'\n'}
-                다른 앱을 열어도 플로팅 버튼이 보여요.
+                다른 앱을 열어도 골드 버튼이 보여요.
               </Text>
             </View>
           )}
-        </View>
-
-        {/* v1.0.1 추가: 버튼 크기 */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>BUTTON SIZE</Text>
-          <View style={styles.sizeRow}>
-            {([
-              { key: 'S', label: '소', dp: 48 },
-              { key: 'M', label: '중', dp: 72 },
-              { key: 'L', label: '대', dp: 96 },
-            ] as const).map(item => (
-              <TouchableOpacity
-                key={item.key}
-                style={[
-                  styles.sizeBtn,
-                  floatSize === item.key && styles.sizeBtnActive,
-                ]}
-                onPress={() => handleSizeChange(item.key)}
-              >
-                <View style={[
-                  styles.sizePreview,
-                  {
-                    width: item.key === 'S' ? 20 : item.key === 'L' ? 40 : 30,
-                    height: item.key === 'S' ? 20 : item.key === 'L' ? 40 : 30,
-                    backgroundColor: floatSize === item.key 
-                      ? getColorHex(floatColor) 
-                      : '#3a3020',
-                  }
-                ]} />
-                <Text style={[
-                  styles.sizeLabel,
-                  floatSize === item.key && styles.sizeLabelActive,
-                ]}>{item.label}</Text>
-                <Text style={styles.sizeDp}>{item.dp}dp</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* v1.0.1 추가: 버튼 색상 */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>BUTTON COLOR</Text>
-          <View style={styles.colorRow}>
-            {([
-              { key: 'GOLD', label: '골드', hex: '#c9a84c' },
-              { key: 'BLUE', label: '블루', hex: '#4c88c9' },
-              { key: 'RED',  label: '레드', hex: '#c94c4c' },
-            ] as const).map(item => (
-              <TouchableOpacity
-                key={item.key}
-                style={[
-                  styles.colorBtn,
-                  floatColor === item.key && styles.colorBtnActive,
-                ]}
-                onPress={() => handleColorChange(item.key)}
-              >
-                <View style={[
-                  styles.colorCircle,
-                  { backgroundColor: item.hex },
-                  floatColor === item.key && styles.colorCircleActive,
-                ]} />
-                <Text style={[
-                  styles.colorLabel,
-                  floatColor === item.key && styles.colorLabelActive,
-                ]}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
 
         {/* 앱 정보 */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>APP INFO</Text>
           {[
-            ['버전', 'v1.0.1'],
+            ['버전', 'v1.0.0'],
             ['물때표 API', '국립해양조사원 (예정)'],
             ['해수 밀도', '1025 kg/m³'],
             ['보정계수', '0.85 (실측 기반)'],
@@ -293,15 +189,6 @@ export default function SettingsScreen() {
 
     </View>
   );
-}
-
-// 색상 헬퍼
-function getColorHex(color: FloatColor): string {
-  switch (color) {
-    case 'BLUE': return '#4c88c9';
-    case 'RED':  return '#c94c4c';
-    default:     return '#c9a84c';
-  }
 }
 
 const styles = StyleSheet.create({
@@ -371,81 +258,4 @@ const styles = StyleSheet.create({
   },
   rowKey: { fontSize:12, color:'#8a7a5a' },
   rowVal: { fontSize:12, color:'#f0ead8', fontWeight:'500' },
-  
-  // v1.0.1 추가: 버튼 크기 스타일
-  sizeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: 8,
-  },
-  sizeBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.15)',
-    borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  sizeBtnActive: {
-    borderColor: 'rgba(201,168,76,0.6)',
-    backgroundColor: 'rgba(201,168,76,0.08)',
-  },
-  sizePreview: {
-    borderRadius: 100,
-    marginBottom: 8,
-  },
-  sizeLabel: {
-    fontSize: 13,
-    color: '#8a7a5a',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  sizeLabelActive: {
-    color: '#e8c96a',
-  },
-  sizeDp: {
-    fontSize: 9,
-    color: '#5a5040',
-    letterSpacing: 1,
-  },
-  
-  // v1.0.1 추가: 버튼 색상 스타일
-  colorRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: 8,
-  },
-  colorBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.15)',
-    borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  colorBtnActive: {
-    borderColor: 'rgba(201,168,76,0.6)',
-    backgroundColor: 'rgba(201,168,76,0.08)',
-  },
-  colorCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  colorCircleActive: {
-    borderColor: '#f0ead8',
-  },
-  colorLabel: {
-    fontSize: 13,
-    color: '#8a7a5a',
-    fontWeight: '500',
-  },
-  colorLabelActive: {
-    color: '#e8c96a',
-  },
 });
