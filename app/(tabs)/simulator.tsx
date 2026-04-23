@@ -5,13 +5,18 @@ import { PE_DATA, SINKERS, LineType } from '@/constants/peData';
 import { calcLineCurve } from '@/lib/physics';
 import { useAppStore } from '@/store/useAppStore';
 import Svg, { Path, Line, Circle, Rect, Defs,
-               LinearGradient, Stop } from 'react-native-svg';
+               LinearGradient, Stop, Image as SvgImage,
+               ClipPath } from 'react-native-svg';
 import AdModal from '@/components/AdModal';
 import { shouldShowAd, markAdShown, AD_KEY_SETTINGS } from '@/lib/adService';
 
 const { width } = Dimensions.get('window');
 const CANVAS_W = width - 32;
 const CANVAS_H = 420;
+
+// ⭐ 이미지 파일 import
+const underwaterBg = require('@/assets/images/underwater_bg.png');
+const boatImage = require('@/assets/images/boat.png');
 
 export default function SimulatorScreen() {
   const { boatRatio, mySetting, saveUserSetting } = useAppStore();
@@ -46,8 +51,11 @@ export default function SimulatorScreen() {
   const ox = cx + 34;
   const oy = surfY - 8;
 
-  // [배 위치 수정] 배가 수면 위에 뜨도록 boatOffset 추가
-  const boatOffset = 18; // 수면 위로 띄우는 픽셀
+  // ⭐ 배 이미지 크기 및 위치 설정
+  const boatWidth = 110;
+  const boatHeight = 140;
+  const boatX = cx - boatWidth / 2;
+  const boatY = surfY - boatHeight + 42; // 배 하단이 수면에 살짝 잠기게
 
   function buildPath(points: {x:number,y:number}[]) {
     if (!points.length) return '';
@@ -122,17 +130,23 @@ export default function SimulatorScreen() {
           <View style={{position:'relative'}}>
             <Svg width={CANVAS_W} height={CANVAS_H}>
               <Defs>
-                <LinearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor="#060808" stopOpacity="1"/>
-                  <Stop offset="1" stopColor="#020404" stopOpacity="1"/>
+                {/* 밤하늘 배경용 그라데이션 */}
+                <LinearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor="#060810" stopOpacity="1"/>
+                  <Stop offset="1" stopColor="#0a1020" stopOpacity="1"/>
+                </LinearGradient>
+                {/* 수면 아래 어둡게 오버레이 - 깊이감 강조 */}
+                <LinearGradient id="depthOverlay" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor="#000000" stopOpacity="0"/>
+                  <Stop offset="1" stopColor="#000000" stopOpacity="0.5"/>
                 </LinearGradient>
               </Defs>
 
               {/* 배경 */}
               <Rect width={CANVAS_W} height={CANVAS_H} fill="#050505"/>
 
-              {/* 밤하늘 */}
-              <Rect width={CANVAS_W} height={surfY} fill="#060810"/>
+              {/* 밤하늘 (수면 위) */}
+              <Rect width={CANVAS_W} height={surfY} fill="url(#skyGrad)"/>
               {[...Array(20)].map((_,i) => (
                 <Circle key={i}
                   cx={(i*137+13)%CANVAS_W}
@@ -141,79 +155,58 @@ export default function SimulatorScreen() {
                   opacity={0.2+Math.sin(i*1.3)*0.2}/>
               ))}
 
-              {/* 물 */}
+              {/* ⭐ 바닷속 배경 이미지 */}
+              <SvgImage
+                x={0}
+                y={surfY}
+                width={CANVAS_W}
+                height={CANVAS_H - surfY}
+                href={underwaterBg}
+                preserveAspectRatio="xMidYMid slice"
+              />
+
+              {/* 깊이감 오버레이 - 아래로 갈수록 어둡게 */}
               <Rect x={0} y={surfY} width={CANVAS_W} height={CANVAS_H-surfY}
-                fill="url(#seaGrad)"/>
+                fill="url(#depthOverlay)"/>
 
               {/* 수면선 */}
               <Line x1={0} y1={surfY} x2={CANVAS_W} y2={surfY}
                 stroke="rgba(201,168,76,0.5)" strokeWidth={0.8}/>
-
-              {/* 조류 물결 */}
-              {[0.2,0.4,0.6,0.8].map((ratio2,i) => {
-                const wy = surfY + (CANVAS_H - surfY - 20) * ratio2;
-                return (
-                  <Path key={i}
-                    d={`M0 ${wy} Q${CANVAS_W*0.25} ${wy-3} ${CANVAS_W*0.5} ${wy} Q${CANVAS_W*0.75} ${wy+3} ${CANVAS_W} ${wy}`}
-                    fill="none" stroke="rgba(201,168,76,0.06)"
-                    strokeWidth={0.8}/>
-                );
-              })}
 
               {/* 수심 격자 */}
               {Array.from({length:Math.floor(depth/20)},(_,i)=>(i+1)*20).map(d => {
                 const py = surfY + d * scaleY;
                 return py < CANVAS_H - 20 ? (
                   <Line key={d} x1={28} y1={py} x2={CANVAS_W} y2={py}
-                    stroke="rgba(201,168,76,0.04)"
+                    stroke="rgba(201,168,76,0.08)"
                     strokeWidth={0.5} strokeDasharray="2,4"/>
                 ) : null;
               })}
 
-              {/* 수심 라벨 */}
-              {Array.from({length:Math.floor(depth/20)},(_,i)=>(i+1)*20).map(d => {
-                const py = surfY + d * scaleY;
-                return py < CANVAS_H - 20 ? (
-                  <Path key={`t${d}`}
-                    d={`M 4 ${py-2}`} fill="rgba(201,168,76,0.3)"/>
-                ) : null;
-              })}
+              {/* ⭐ 배 이미지 (기존 SVG 배 그림 모두 삭제하고 이미지로 교체) */}
+              <SvgImage
+                x={boatX}
+                y={boatY}
+                width={boatWidth}
+                height={boatHeight}
+                href={boatImage}
+                preserveAspectRatio="xMidYMid meet"
+              />
 
-              {/* 해저 */}
-              <Rect x={0} y={CANVAS_H-16} width={CANVAS_W} height={16}
-                fill="#100e08"/>
-
-              {/* [배 위치 수정] boatOffset 만큼 위로 띄움 */}
-              {/* 선체 — 수면 위에 올라오도록 */}
-              <Path
-                d={`M${cx-40} ${surfY-boatOffset} C${cx-44} ${surfY-boatOffset+10} ${cx-28} ${surfY-boatOffset+22} ${cx-16} ${surfY-boatOffset+22} L${cx+16} ${surfY-boatOffset+22} C${cx+28} ${surfY-boatOffset+22} ${cx+44} ${surfY-boatOffset+10} ${cx+40} ${surfY-boatOffset} Z`}
-                fill="#1a1408" stroke="rgba(201,168,76,0.4)" strokeWidth={0.8}/>
-              {/* 갑판 */}
-              <Rect x={cx-22} y={surfY-boatOffset-9} width={44} height={8}
-                fill="#141410" stroke="rgba(201,168,76,0.2)" strokeWidth={0.5}/>
-              {/* 마스트 */}
-              <Line x1={cx} y1={surfY-boatOffset-32} x2={cx} y2={surfY-boatOffset-8}
-                stroke="#c9a84c" strokeWidth={2}/>
-              {/* 항법등 */}
-              <Circle cx={cx} cy={surfY-boatOffset-32} r={2.5} fill="#c9a84c"/>
-              <Circle cx={cx} cy={surfY-boatOffset-32} r={5}
-                fill="rgba(201,168,76,0.2)"/>
-              {/* 낚싯대 */}
-              <Line x1={cx} y1={surfY-boatOffset-24} x2={ox} y2={oy}
-                stroke="rgba(201,168,76,0.5)" strokeWidth={1.2}/>
-              {/* 릴 */}
-              <Circle cx={cx+14} cy={surfY-boatOffset-12} r={2} fill="#c9a84c"/>
+              {/* 낚싯대 (배에서 바다로 이어지는 선) */}
+              <Line x1={cx + 18} y1={boatY + boatHeight * 0.55} x2={ox} y2={oy}
+                stroke="rgba(201,168,76,0.6)" strokeWidth={1.2}/>
 
               {/* 저장 라인 (빨강 점선) */}
               {savedPts && (
                 <Path d={buildPath(savedPts)} fill="none"
                   stroke="#e05555" strokeWidth={1.5}
-                  strokeDasharray="8,5" opacity={0.65}/>
+                  strokeDasharray="8,5" opacity={0.75}/>
               )}
 
               {/* 메인 라인 (골드 글로우) */}
               <Path d={buildPath(pts)} fill="none"
-                stroke="rgba(201,168,76,0.15)" strokeWidth={8}/>
+                stroke="rgba(201,168,76,0.2)" strokeWidth={8}/>
               <Path d={buildPath(pts)} fill="none"
                 stroke="#c9a84c" strokeWidth={2}/>
 
@@ -221,7 +214,7 @@ export default function SimulatorScreen() {
               <Circle
                 cx={ox + last.x * scaleX}
                 cy={surfY + last.y * scaleY}
-                r={10} fill="rgba(201,168,76,0.15)"/>
+                r={10} fill="rgba(201,168,76,0.2)"/>
               <Circle
                 cx={ox + last.x * scaleX}
                 cy={surfY + last.y * scaleY}
@@ -281,32 +274,29 @@ export default function SimulatorScreen() {
         </View>
 
         {/* ── 저장 버튼 ── */}
-        {/* [버튼 토글 수정]
-            저장 전: 내 세팅 저장 → 골드(활성), 지우기 → 흐림(비활성)
-            저장 후: 내 세팅 저장 → 흐림(비활성), 지우기 → 골드(활성) */}
         <View style={styles.btnRow}>
           {/* 내 세팅 저장 버튼 */}
           <TouchableOpacity
             style={[styles.btnGold, hasSaved && styles.btnGoldDisabled]}
             disabled={hasSaved}
             onPress={async () => {
-  setSaved({ dia, sinker, vRel, depth });
-  setHasSaved(true);
-  await saveUserSetting({ lineType, peKey, dia, sinker });
+              setSaved({ dia, sinker, vRel, depth });
+              setHasSaved(true);
+              await saveUserSetting({ lineType, peKey, dia, sinker });
 
-  // 광고 하루 1회 체크
-  const show = await shouldShowAd(AD_KEY_SETTINGS);
-  if (show) {
-    await markAdShown(AD_KEY_SETTINGS);
-    setAdVisible(true);
-  }
-}}>
+              // 광고 하루 1회 체크
+              const show = await shouldShowAd(AD_KEY_SETTINGS);
+              if (show) {
+                await markAdShown(AD_KEY_SETTINGS);
+                setAdVisible(true);
+              }
+            }}>
             <Text style={[styles.btnGoldText, hasSaved && styles.btnTextDisabled]}>
               ⚓ 내 세팅 저장
             </Text>
           </TouchableOpacity>
 
-          {/* 지우기 버튼 — 저장 후 골드로 활성화 */}
+          {/* 지우기 버튼 */}
           <TouchableOpacity
             style={[
               hasSaved ? styles.btnGoldSmall : styles.btnGhost,
@@ -389,11 +379,14 @@ const styles = StyleSheet.create({
   sideItem: { alignItems:'center' },
   sideLabel: {
     fontSize:7, letterSpacing:1.5,
-    color:'rgba(201,168,76,0.5)', marginBottom:2,
+    color:'rgba(201,168,76,0.7)', marginBottom:2,
   },
   sideVal: {
     fontSize:11, fontWeight:'700',
     color:'#e8c96a', letterSpacing:0.5,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   panel: {
@@ -427,34 +420,26 @@ const styles = StyleSheet.create({
     margin:16, marginTop:0, marginBottom:24,
   },
 
-  // 내 세팅 저장 — 기본 골드
   btnGold: {
     flex:1, backgroundColor:'#c9a84c',
     padding:13, borderRadius:4, alignItems:'center',
   },
-  // 내 세팅 저장 — 저장 후 흐림
   btnGoldDisabled: {
     backgroundColor:'rgba(201,168,76,0.15)',
     borderWidth:1, borderColor:'rgba(201,168,76,0.2)',
   },
-
-  // 지우기 — 저장 후 골드 (작은 버튼)
   btnGoldSmall: {
     paddingHorizontal:20, padding:13,
     backgroundColor:'#c9a84c',
     borderRadius:4, alignItems:'center',
   },
-
-  // 지우기 — 기본 ghost
   btnGhost: {
     paddingHorizontal:20, padding:13, borderRadius:4,
     borderWidth:1, borderColor:'rgba(201,168,76,0.2)', alignItems:'center',
   },
-  // 지우기 — 저장 전 흐림
   btnGhostDisabled: {
     opacity: 0.3,
   },
-
   btnGoldText: { color:'#080808', fontWeight:'700', fontSize:12, letterSpacing:1 },
   btnGhostText: { color:'#8a7a5a', fontSize:12 },
   btnTextDisabled: { color:'#3a3020' },

@@ -24,6 +24,7 @@ interface AppState {
   minusCount: (id: string) => void;
   resetAll: () => void;
   resetItem: (id: string) => void;
+  renameItem: (id: string, newName: string) => void;  // ⭐ 추가
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -86,10 +87,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     items: state.items.map(i => ({ ...i, count: 0 })),
   })),
 
-resetItem: (id: string) => set(state => ({
-  items: state.items.map(i =>
-    i.id === id ? { ...i, count: 0 } : i
-  ),
-})),
+  resetItem: (id: string) => set(state => ({
+    items: state.items.map(i =>
+      i.id === id ? { ...i, count: 0 } : i
+    ),
+  })),
+
+  // ⭐ 항목 이름 변경 (count는 그대로 유지)
+  renameItem: (id: string, newName: string) => set(state => ({
+    items: state.items.map(i =>
+      i.id === id ? { ...i, name: newName.trim() || i.name } : i
+    ),
+  })),
 
 }));
