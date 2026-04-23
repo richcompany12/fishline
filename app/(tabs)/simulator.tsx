@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView,
-         TouchableOpacity, Dimensions } from 'react-native';
+         TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useState } from 'react';
 import { PE_DATA, SINKERS, LineType } from '@/constants/peData';
 import { calcLineCurve } from '@/lib/physics';
@@ -57,6 +57,28 @@ export default function SimulatorScreen() {
   const boatX = cx - boatWidth / 2;
   const boatY = surfY - boatHeight + 42; // 배 하단이 수면에 살짝 잠기게
 
+  // ⭐ 앱 공유 기능
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `🎣 FISHLINE - 선상낚시인 필수앱 🎣
+
+✅ 낚싯줄 라인 시뮬레이터
+   (PE호수, 조류, 수심 실시간 계산)
+✅ 마릿수 플로팅 카운터
+   (다른 앱 위에서도 표시!)
+✅ 맞춤 세팅 저장
+
+▶ 구글플레이에서 다운로드:
+https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp
+
+by 웜부자 🐟`,
+      });
+    } catch (error) {
+      console.log('공유 오류:', error);
+    }
+  };
+
   function buildPath(points: {x:number,y:number}[]) {
     if (!points.length) return '';
     let d = `M ${ox} ${oy}`;
@@ -69,8 +91,14 @@ export default function SimulatorScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>FISHLINE</Text>
-        <Text style={styles.logoSub}>LINE SIMULATOR PRO</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.logo}>FISHLINE</Text>
+          <Text style={styles.logoSub}>LINE SIMULATOR PRO</Text>
+        </View>
+        <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.7}>
+          <Text style={styles.shareBtnIcon}>🔗</Text>
+          <Text style={styles.shareBtnText}>공유</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -326,10 +354,14 @@ export default function SimulatorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex:1, backgroundColor:'#080808' },
-  header: {
+   header: {
     paddingHorizontal:20, paddingTop:56, paddingBottom:16,
     borderBottomWidth:1, borderBottomColor:'rgba(201,168,76,0.15)',
+    flexDirection: 'row', alignItems: 'flex-end',
   },
+  shareBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(201,168,76,0.3)', borderRadius: 20 },
+  shareBtnIcon: { fontSize: 13 },
+  shareBtnText: { fontSize: 11, color: '#c9a84c', fontWeight: '600', letterSpacing: 1 },
   logo: { fontSize:22, fontWeight:'700', letterSpacing:4, color:'#e8c96a' },
   logoSub: { fontSize:8, letterSpacing:4, color:'#8a7a5a', marginTop:2 },
 
