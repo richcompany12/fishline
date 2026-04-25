@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Switch, AppState, TouchableOpacity,
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '@/store/useAppStore';
-import { startFloatingButton, stopFloatingButton, updateFloatingItems, updateFloatingStyle, FloatSize, FloatColor } from '@/lib/FloatingService';
+import { startFloatingButton, stopFloatingButton, updateFloatingItems, updateFloatingStyle, FloatSize, FloatColor, listenFloatingStoppedByUser } from '@/lib/FloatingService';
 import AdModal from '@/components/AdModal';
 import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
 
@@ -42,6 +42,15 @@ export default function SettingsScreen() {
       }
     };
     loadStates();
+  }, []);
+
+  // ⭐ 플로팅에서 4초 종료한 경우 → 토글 자동 OFF
+  useEffect(() => {
+    const sub = listenFloatingStoppedByUser(async () => {
+      setFloatingEnabled(false);
+      await AsyncStorage.setItem(TOGGLE_KEY, 'false');
+    });
+    return () => sub.remove();
   }, []);
 
   // 권한 설정 화면 갔다가 앱으로 돌아올 때 자동으로 서비스 시작 재시도

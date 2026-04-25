@@ -231,7 +231,7 @@ applyStyleToFloatingButton()
     }
 
     // ─────────────────────────────────────────────
-    // 터치 리스너 (드래그 + 탭)
+    // 터치 리스너 (드래그 + 탭 + 4초 롱프레스 → 종료 팝업)
     // ─────────────────────────────────────────────
     private fun setupTouchListener(targetView: View) {
         val handler = Handler(Looper.getMainLooper())
@@ -241,22 +241,35 @@ applyStyleToFloatingButton()
         var startParamX = 0
         var startParamY = 0
         var touchStartTime = 0L
+        var isExitDialogShown = false  // ⭐ 팝업 중복 방지
 
         val moveRunnable = Runnable {
             isMoving = true
             floatingView.alpha = 0.6f
         }
 
+        // ⭐ 4초 롱프레스 → 종료 확인 팝업
+        val exitPromptRunnable = Runnable {
+            if (!isExitDialogShown) {
+                isExitDialogShown = true
+                floatingView.alpha = 1.0f  // 투명도 복원
+                showExitConfirmDialog()
+            }
+        }
+
         targetView.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     isMoving = false
+                    isExitDialogShown = false
                     touchStartTime = System.currentTimeMillis()
                     startX = event.rawX
                     startY = event.rawY
                     startParamX = floatParams.x
                     startParamY = floatParams.y
                     handler.postDelayed(moveRunnable, 500)
+                    // ⭐ 4초 후 종료 팝업 예약
+                    handler.postDelayed(exitPromptRunnable, 4000)
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -282,6 +295,7 @@ applyStyleToFloatingButton()
                 }
                 MotionEvent.ACTION_UP -> {
                     handler.removeCallbacks(moveRunnable)
+                    handler.removeCallbacks(exitPromptRunnable)  // ⭐ 타이머 취소
                     val elapsed = System.currentTimeMillis() - touchStartTime
                     val dx = Math.abs(event.rawX - startX)
                     val dy = Math.abs(event.rawY - startY)
@@ -297,13 +311,62 @@ applyStyleToFloatingButton()
                             saveCurrentState()
                             updateMainButton()
                             if (isPanelVisible) updateMiniPanel()
-                            emitSyncToJS()  // [BUG7 수정] JS로 실시간 전송
+                            emitSyncToJS()
                         }
                     }
                     true
                 }
                 else -> false
             }
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // ⭐ 종료 확인 다이얼로그 (토스트 대체)
+    // ─────────────────────────────────────────────
+    private fun showExitConfirmDialog() {
+        val context = this
+        val dialogView = LayoutInflater.from(context).inflate(
+            resources.getIdentifier("exit_confirm_dialog", "layout", packageName),
+            null
+        )
+
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+            dimAmount = 0.7f
+        }
+
+        try {
+            windowManager.addView(dialogView, dialogParams)
+
+            val confirmBtn = dialogView.findViewById<android.widget.Button>(
+                resources.getIdentifier("btn_exit_confirm", "id", packageName)
+            )
+            val cancelBtn = dialogView.findViewById<android.widget.Button>(
+                resources.getIdentifier("btn_exit_cancel", "id", packageName)
+            )
+
+             confirmBtn?.setOnClickListener {
+                try { windowManager.removeView(dialogView) } catch (e: Exception) {}
+                
+                // ⭐ JS에 "사용자가 종료함" 이벤트 전송
+                emitStoppedByUserToJS()
+                
+                // 플로팅 서비스 완전 종료
+                stopSelf()
+            }
+
+            cancelBtn?.setOnClickListener {
+                try { windowManager.removeView(dialogView) } catch (e: Exception) {}
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -377,7 +440,7 @@ applyStyleToFloatingButton()
     }
 
 // ─────────────────────────────────────────────
-// 스타일 적용 (크기 + 색상)
+// 스타일 적용 (크기 + 색상 이미지)
 // ─────────────────────────────────────────────
 private fun applyStyleToFloatingButton() {
     if (!::floatingView.isInitialized) return
@@ -392,11 +455,11 @@ private fun applyStyleToFloatingButton() {
     }
     val sizePx = (sizeDp * density).toInt()
     
-    // 색상 hex
-    val colorHex = when (currentColor) {
-        "BLUE" -> "#4c88c9"
-        "RED"  -> "#c94c4c"
-        else   -> "#c9a84c"  // GOLD 기본
+    // ⭐ 이미지 리소스 선택 (assets에서 읽어옴)
+    val imageAssetName = when (currentColor) {
+        "BLUE" -> "images/float_blue.png"
+        "RED"  -> "images/float_orange.png"  // RED 슬롯에 오렌지 적용
+        else   -> "images/float_gold.png"    // GOLD 기본
     }
     
     // 메인 카운터 버튼에 적용
@@ -407,11 +470,21 @@ private fun applyStyleToFloatingButton() {
         params.height = sizePx
         it.layoutParams = params
         
+        // ⭐ assets에서 이미지 로드
         try {
-            val drawable = it.background?.mutate() as? android.graphics.drawable.GradientDrawable
-            drawable?.setColor(Color.parseColor(colorHex))
+            val inputStream = assets.open(imageAssetName)
+            val drawable = android.graphics.drawable.Drawable.createFromStream(inputStream, null)
+            inputStream.close()
+            it.background = drawable
         } catch (e: Exception) {
-            it.setBackgroundColor(Color.parseColor(colorHex))
+            e.printStackTrace()
+            // 실패 시 기본 색상 fallback
+            val fallbackHex = when (currentColor) {
+                "BLUE" -> "#4c88c9"
+                "RED"  -> "#c94c4c"
+                else   -> "#c9a84c"
+            }
+            it.setBackgroundColor(Color.parseColor(fallbackHex))
         }
     }
     
@@ -430,6 +503,16 @@ private fun applyStyleToFloatingButton() {
     }
     nameText?.textSize = nameSize
     countText?.textSize = countSize
+    
+    // ⭐ 텍스트 색상: 이미지 배경 위에 가독성 확보
+    // 골드/오렌지 배경 → 진한 갈색 텍스트
+    // 블루 배경 → 진한 네이비 텍스트
+    val textColor = when (currentColor) {
+        "BLUE" -> "#1a3a4a"  // 진한 네이비
+        else   -> "#3a2810"  // 진한 갈색
+    }
+    nameText?.setTextColor(Color.parseColor(textColor))
+    countText?.setTextColor(Color.parseColor(textColor))
     
     // WindowManager 업데이트
     try {
@@ -513,6 +596,23 @@ private fun applyStyleToFloatingButton() {
                 ?.emit("FloatingSyncCount", currentItemsJson)
         } catch (e: Exception) {
             // ReactContext가 아직 준비 안 됐거나 앱이 백그라운드일 때 — 무시
+            e.printStackTrace()
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // ⭐ JS에 "사용자가 플로팅 종료함" 이벤트 emit
+    // ─────────────────────────────────────────────
+    private fun emitStoppedByUserToJS() {
+        try {
+            val reactContext = (application as? ReactApplication)
+                ?.reactNativeHost
+                ?.reactInstanceManager
+                ?.currentReactContext
+            reactContext
+                ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit("FloatingStoppedByUser", "")
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }

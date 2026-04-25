@@ -155,3 +155,13 @@ export function listenFloatingServiceStarted(
 ): EmitterSubscription {
   return DeviceEventEmitter.addListener('FloatingServiceStarted', callback);
 }
+
+/**
+ * 사용자가 플로팅 버튼을 4초 길게 눌러서 종료한 경우 발생.
+ * settings.tsx에서 받아서 토글 OFF 동기화에 사용.
+ */
+export function listenFloatingStoppedByUser(
+  callback: () => void
+): EmitterSubscription {
+  return DeviceEventEmitter.addListener('FloatingStoppedByUser', callback);
+}
