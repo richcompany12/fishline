@@ -41,9 +41,8 @@
       "expo-router",
       "expo-web-browser",
       "./plugins/withFloatingButton",
-      "@react-native-google-signin/google-signin",
-      "react-native-google-mobile-ads"
-    ],
+      "@react-native-google-signin/google-signin"
+      ],
     "experiments": {
       "typedRoutes": true
     },

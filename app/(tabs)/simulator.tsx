@@ -221,9 +221,43 @@ by 웜부자 🐟`,
                 preserveAspectRatio="xMidYMid meet"
               />
 
-              {/* 낚싯대 (배에서 바다로 이어지는 선) */}
-              <Line x1={cx + 18} y1={boatY + boatHeight * 0.55} x2={ox} y2={oy}
-                stroke="rgba(201,168,76,0.6)" strokeWidth={1.2}/>
+{/* 낚싯줄 - 공중 구간 (난간 → 정점 → 수면) */}
+{(() => {
+  const railX = cx + 18;
+  const railY = boatY + boatHeight * 0.59;
+  const peakX = ox;
+  const peakY = railY - 11;
+  
+  return (
+    <>
+      {/* ① 난간에서 정점까지 - 글로우 (두꺼운 흐릿) */}
+      <Line 
+        x1={railX} y1={railY} 
+        x2={peakX} y2={peakY}
+        stroke="rgba(201,168,76,0.2)" strokeWidth={8}
+      />
+      {/* ① 난간에서 정점까지 - 메인 (얇고 진함) */}
+      <Line 
+        x1={railX} y1={railY} 
+        x2={peakX} y2={peakY}
+        stroke="#c9a84c" strokeWidth={2}
+      />
+      
+      {/* ② 정점에서 수면까지 - 글로우 (두꺼운 흐릿) */}
+      <Line 
+        x1={peakX} y1={peakY} 
+        x2={ox} y2={oy}
+        stroke="rgba(201,168,76,0.2)" strokeWidth={8}
+      />
+      {/* ② 정점에서 수면까지 - 메인 (얇고 진함) */}
+      <Line 
+        x1={peakX} y1={peakY} 
+        x2={ox} y2={oy}
+        stroke="#c9a84c" strokeWidth={2}
+      />
+    </>
+  );
+})()}
 
               {/* 저장 라인 (빨강 점선) */}
               {savedPts && (
