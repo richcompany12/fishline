@@ -1,6 +1,6 @@
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, Share, SafeAreaView,
+  Alert, Share, SafeAreaView, Image, Modal, Dimensions,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
@@ -8,8 +8,13 @@ import {
   getAllHistory, deleteHistory, HistoryRecord, formatDate,
 } from '@/lib/historyService';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 export default function HistoryScreen() {
   const [records, setRecords] = useState<HistoryRecord[]>([]);
+  
+  // ⭐ 사진 큰 화면 보기 모달
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
     const data = await getAllHistory();
@@ -96,44 +101,97 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
 
           {records.map(record => (
             <View key={record.id} style={styles.card}>
-              {/* 날짜 + 총 마리수 */}
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardDate}>📅 {formatDate(record.date)}</Text>
-                <Text style={styles.cardTotal}>총 {record.totalCount}마리</Text>
-              </View>
-
-              {/* 메모 */}
-              <Text style={styles.cardMemo}>{record.memo || '(메모 없음)'}</Text>
-
-              {/* 항목별 카운트 */}
-              <View style={styles.itemsWrap}>
-                {record.items.map((item, idx) => (
-                  <View key={idx} style={styles.itemChip}>
-                    <Text style={styles.itemChipName}>{item.name}</Text>
-                    <Text style={styles.itemChipCount}>{item.count}</Text>
+              {/* ⭐ 히어로 이미지 영역 (사진 있을 때만) */}
+              {record.photoUri && (
+                <TouchableOpacity 
+                  activeOpacity={0.9}
+                  onPress={() => setPreviewPhoto(record.photoUri!)}
+                  style={styles.heroImageWrap}
+                >
+                  <Image 
+                    source={{ uri: record.photoUri }} 
+                    style={styles.heroImage}
+                    resizeMode="cover"
+                  />
+                  {/* 우상단 총마리수 배지 */}
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>총 {record.totalCount}마리</Text>
                   </View>
-                ))}
-              </View>
+                  {/* 좌하단 그라데이션 + 날짜 */}
+                  <View style={styles.heroDateWrap}>
+                    <Text style={styles.heroDateText}>📅 {formatDate(record.date)}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
 
-              {/* 액션 버튼 */}
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => handleShareRecord(record)}
-                >
-                  <Text style={styles.actionBtnText}>🔗 공유</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.deleteBtn]}
-                  onPress={() => handleDelete(record.id, record.memo)}
-                >
-                  <Text style={[styles.actionBtnText, styles.deleteBtnText]}>🗑️ 삭제</Text>
-                </TouchableOpacity>
+              {/* 일반 헤더 (사진 없을 때만) */}
+              {!record.photoUri && (
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardDate}>📅 {formatDate(record.date)}</Text>
+                  <Text style={styles.cardTotal}>총 {record.totalCount}마리</Text>
+                </View>
+              )}
+
+              {/* 정보 영역 - 사진 있을 때 padding 조정 */}
+              <View style={record.photoUri ? styles.infoSectionWithPhoto : undefined}>
+                {/* 메모 */}
+                <Text style={styles.cardMemo}>{record.memo || '(메모 없음)'}</Text>
+
+                {/* 항목별 카운트 */}
+                <View style={styles.itemsWrap}>
+                  {record.items.map((item, idx) => (
+                    <View key={idx} style={styles.itemChip}>
+                      <Text style={styles.itemChipName}>{item.name}</Text>
+                      <Text style={styles.itemChipCount}>{item.count}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* 액션 버튼 */}
+                <View style={styles.cardActions}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleShareRecord(record)}
+                  >
+                    <Text style={styles.actionBtnText}>🔗 공유</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.deleteBtn]}
+                    onPress={() => handleDelete(record.id, record.memo)}
+                  >
+                    <Text style={[styles.actionBtnText, styles.deleteBtnText]}>🗑️ 삭제</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
         </ScrollView>
       )}
+
+      {/* ⭐ 사진 큰 화면 모달 */}
+      <Modal
+        visible={!!previewPhoto}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewPhoto(null)}
+      >
+        <TouchableOpacity 
+          style={styles.previewOverlay}
+          activeOpacity={1}
+          onPress={() => setPreviewPhoto(null)}
+        >
+          {previewPhoto && (
+            <Image 
+              source={{ uri: previewPhoto }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          )}
+          <View style={styles.previewCloseBtn}>
+            <Text style={styles.previewCloseText}>✕  탭하여 닫기</Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -202,14 +260,67 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(201,168,76,0.15)',
     borderRadius: 6,
-    padding: 16,
     marginBottom: 12,
+    overflow: 'hidden', // ⭐ 사진 모서리 깔끔하게
   },
+  
+  // ⭐ 히어로 이미지
+  heroImageWrap: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    backgroundColor: '#1a1a1a',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  heroBadgeText: {
+    color: '#c9a84c',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  heroDateWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 14,
+    paddingTop: 30,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  heroDateText: {
+    color: '#fff',
+    fontSize: 11,
+    opacity: 0.95,
+    letterSpacing: 0.3,
+  },
+  
+  // ⭐ 사진 있을 때 정보 영역 패딩
+  infoSectionWithPhoto: {
+    padding: 16,
+  },
+  
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    paddingTop: 16,
+    paddingHorizontal: 16,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(201,168,76,0.08)',
@@ -231,6 +342,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
     lineHeight: 20,
+    paddingHorizontal: 16, // 사진 없을 땐 자체 패딩 (사진 있으면 부모가 처리)
   },
 
   // 항목 칩
@@ -239,6 +351,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     marginBottom: 14,
+    paddingHorizontal: 16,
   },
   itemChip: {
     flexDirection: 'row',
@@ -265,6 +378,8 @@ const styles = StyleSheet.create({
   cardActions: {
     flexDirection: 'row',
     gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   actionBtn: {
     flex: 1,
@@ -286,5 +401,32 @@ const styles = StyleSheet.create({
   },
   deleteBtnText: {
     color: '#e05555',
+  },
+  
+  // ⭐ 사진 큰 화면 모달
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '85%',
+  },
+  previewCloseBtn: {
+    position: 'absolute',
+    bottom: 60,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(201,168,76,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.4)',
+    borderRadius: 20,
+  },
+  previewCloseText: {
+    color: '#c9a84c',
+    fontSize: 13,
+    letterSpacing: 1,
   },
 });
