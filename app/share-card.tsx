@@ -9,8 +9,9 @@
 
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, ActivityIndicator, Alert,
+  ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useRef } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { captureRef } from 'react-native-view-shot';
@@ -21,6 +22,7 @@ import { getAllHistory, HistoryRecord } from '@/lib/historyService';
 import { ShareCard } from '@/components/ShareCard';
 
 export default function ShareCardScreen() {
+  const insets = useSafeAreaInsets();  // ⭐ 추가  
   const { recordId } = useLocalSearchParams<{ recordId: string }>();
   const [record, setRecord] = useState<HistoryRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -172,10 +174,10 @@ export default function ShareCardScreen() {
         </Text>
       </ScrollView>
 
-      {/* 하단 액션 버튼 */}
-      <View style={styles.actionBar}>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.saveBtn]} 
+    {/* 하단 액션 버튼 */}
+<View style={[styles.actionBar, { paddingBottom: insets.bottom + 12 }]}>
+  <TouchableOpacity 
+    style={[styles.actionBtn, styles.saveBtn]} 
           onPress={handleSaveToGallery}
           disabled={saving || sharing}
         >
@@ -275,11 +277,11 @@ const styles = StyleSheet.create({
   
   // 하단 액션 바
   actionBar: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: 24,
+  flexDirection: 'row',
+  gap: 8,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  // paddingBottom은 insets로 동적 처리
     borderTopWidth: 1,
     borderTopColor: 'rgba(201,168,76,0.15)',
     backgroundColor: '#080808',

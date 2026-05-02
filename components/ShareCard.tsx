@@ -1,26 +1,29 @@
 /**
- * ShareCard.tsx
+ * ShareCard.tsx (v5 - 광고 효과 강화)
  *
- * 자랑 카드 컴포넌트 (트로피 모드)
+ * 자랑 카드 컴포넌트
  * - 9:16 비율 (인스타 스토리, 카톡 최적화)
  * - 사진이 메인 비주얼
  * - 시네마틱 그라데이션 오버레이
  * - 거대한 TOTAL 숫자 (메탈릭 골드)
- * - 하단 QR + 워터마크
+ * - 푸터 = 광고 영역 강화
+ *   - QR 코드 크게 (인스타 인식 가능 사이즈)
+ *   - FISHLINE 로고 거대 (Georgia + 메탈릭 골드)
+ *   - "on Google Play" 명확
+ *   - RICHCOMPANY 우측 하단 (저작권)
  */
 
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { forwardRef } from 'react';
-import Svg, { Defs, LinearGradient, Stop, Rect, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import QRCode from 'react-native-qrcode-svg';
-import { HistoryRecord, formatDate } from '@/lib/historyService';
+import { HistoryRecord } from '@/lib/historyService';
 
 // 카드 사이즈 (9:16 비율, 인스타 스토리 표준)
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1920;
 
-// 미리보기용 스케일 (실제 캡처 시에는 100%, 화면 표시 시에는 축소)
-// 화면에서는 380으로 축소 표시 (≈ 35%)
+// 미리보기용 스케일 (실제 캡처 시 1080×1920, 화면에서는 380px로 축소)
 const PREVIEW_WIDTH = 380;
 const PREVIEW_SCALE = PREVIEW_WIDTH / CARD_WIDTH;
 const PREVIEW_HEIGHT = CARD_HEIGHT * PREVIEW_SCALE;
@@ -35,17 +38,14 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
   const dateStr = formatShareDate(record.date);
   const dayStr = formatDayOfWeek(record.date);
   
-  // 항목별 카운트를 두 개씩 묶기 (한 줄에 두 개 표시)
-  const itemPairs: Array<[typeof record.items[0], typeof record.items[0] | null]> = [];
-  for (let i = 0; i < record.items.length; i += 2) {
-    itemPairs.push([record.items[i], record.items[i + 1] || null]);
-  }
+  // 항목별 카운트를 한 줄로 압축 (인터펀크트로 구분)
+  const itemsLine = record.items.map(i => `${i.name} ${i.count}`).join(' · ');
   
   return (
     <View 
       ref={ref}
       style={[styles.cardContainer, { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }]}
-      collapsable={false} // ⭐ view-shot 캡처 위해 필수
+      collapsable={false}
     >
       {/* 사진 (배경) */}
       {record.photoUri ? (
@@ -58,21 +58,21 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
         <View style={styles.bgFallback} />
       )}
       
-      {/* 시네마틱 그라데이션 오버레이 (SVG) */}
+      {/* 시네마틱 그라데이션 오버레이 */}
       <View style={styles.overlayWrap} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox={`0 0 ${PREVIEW_WIDTH} ${PREVIEW_HEIGHT}`}>
           <Defs>
-            {/* 위에서 아래로 어두워지는 그라데이션 */}
+            {/* 하단으로 갈수록 어두워짐 */}
             <LinearGradient id="bottomDark" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#000" stopOpacity="0.1" />
+              <Stop offset="0%" stopColor="#000" stopOpacity="0" />
               <Stop offset="40%" stopColor="#000" stopOpacity="0.3" />
-              <Stop offset="70%" stopColor="#000" stopOpacity="0.75" />
-              <Stop offset="100%" stopColor="#000" stopOpacity="0.95" />
+              <Stop offset="75%" stopColor="#000" stopOpacity="0.85" />
+              <Stop offset="100%" stopColor="#000" stopOpacity="0.98" />
             </LinearGradient>
             
             {/* 상단 약간 어둡게 */}
             <LinearGradient id="topDark" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#000" stopOpacity="0.6" />
+              <Stop offset="0%" stopColor="#000" stopOpacity="0.55" />
               <Stop offset="100%" stopColor="#000" stopOpacity="0" />
             </LinearGradient>
           </Defs>
@@ -82,114 +82,148 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
         </Svg>
       </View>
       
-      {/* 콘텐츠 영역 (스케일 적용된 절대 좌표) */}
+      {/* 콘텐츠 영역 */}
       <View style={styles.contentWrap} pointerEvents="none">
         
-        {/* 헤더 - 좌상단 로고 */}
-        <View style={[styles.headerLeft, { top: 50 * PREVIEW_SCALE, left: 60 * PREVIEW_SCALE }]}>
-          <Text style={[styles.brandLogo, { fontSize: 28 * PREVIEW_SCALE }]}>FISHLINE</Text>
-          <View style={[styles.brandLine, { width: 100 * PREVIEW_SCALE }]} />
-          <Text style={[styles.brandSub, { fontSize: 22 * PREVIEW_SCALE }]}>CATCH OF THE DAY</Text>
+        {/* 헤더 좌상단 - CATCH OF THE DAY */}
+        <View style={[styles.headerLeft, { 
+          top: 60 * PREVIEW_SCALE, 
+          left: 56 * PREVIEW_SCALE,
+        }]}>
+          <View style={[styles.brandAccentLine, { 
+            width: 110 * PREVIEW_SCALE, 
+            height: 5 * PREVIEW_SCALE,
+            marginBottom: 14 * PREVIEW_SCALE,
+          }]} />
+          <Text style={[styles.brandSub, { fontSize: 28 * PREVIEW_SCALE }]}>
+            CATCH OF THE DAY
+          </Text>
         </View>
         
-        {/* 헤더 - 우상단 날짜 */}
-        <View style={[styles.headerRight, { top: 50 * PREVIEW_SCALE, right: 60 * PREVIEW_SCALE }]}>
-          <Text style={[styles.dateMain, { fontSize: 26 * PREVIEW_SCALE }]}>{dateStr}</Text>
-          <Text style={[styles.daySub, { fontSize: 20 * PREVIEW_SCALE }]}>{dayStr}</Text>
+        {/* 헤더 우상단 - 날짜 */}
+        <View style={[styles.headerRight, { 
+          top: 60 * PREVIEW_SCALE, 
+          right: 56 * PREVIEW_SCALE,
+        }]}>
+          <Text style={[styles.dateMain, { fontSize: 36 * PREVIEW_SCALE }]}>
+            {dateStr}
+          </Text>
+          <Text style={[styles.daySub, { 
+            fontSize: 22 * PREVIEW_SCALE,
+            marginTop: 6 * PREVIEW_SCALE,
+          }]}>
+            {dayStr}
+          </Text>
         </View>
         
-        {/* 메인 영역 - 하단 좌측 */}
+        {/* 메인 영역 - TOTAL CATCH */}
         <View style={[styles.mainArea, { 
-          left: 60 * PREVIEW_SCALE, 
-          right: 60 * PREVIEW_SCALE,
-          bottom: 240 * PREVIEW_SCALE,
+          left: 56 * PREVIEW_SCALE, 
+          right: 56 * PREVIEW_SCALE,
+          bottom: 280 * PREVIEW_SCALE,
         }]}>
           
-          {/* TOTAL 라벨 */}
+          {/* 골드 라인 + TOTAL CATCH 라벨 */}
+          <View style={[styles.brandAccentLine, { 
+            width: 130 * PREVIEW_SCALE, 
+            height: 8 * PREVIEW_SCALE,
+            marginBottom: 18 * PREVIEW_SCALE,
+          }]} />
           <Text style={[styles.totalLabel, { 
-            fontSize: 24 * PREVIEW_SCALE, 
-            marginBottom: 10 * PREVIEW_SCALE,
-          }]}>TOTAL CATCH</Text>
+            fontSize: 30 * PREVIEW_SCALE, 
+            marginBottom: 8 * PREVIEW_SCALE,
+          }]}>
+            TOTAL CATCH
+          </Text>
           
-          {/* 거대한 숫자 */}
+          {/* 거대한 숫자 + 마리 */}
           <View style={styles.totalNumberRow}>
             <Text style={[styles.totalNumber, { 
-              fontSize: 220 * PREVIEW_SCALE,
-              lineHeight: 220 * PREVIEW_SCALE,
+              fontSize: 280 * PREVIEW_SCALE,
+              lineHeight: 280 * PREVIEW_SCALE,
             }]}>
               {record.totalCount}
             </Text>
             <Text style={[styles.totalUnit, { 
-              fontSize: 50 * PREVIEW_SCALE,
-              marginLeft: 20 * PREVIEW_SCALE,
-              marginBottom: 30 * PREVIEW_SCALE,
+              fontSize: 60 * PREVIEW_SCALE,
+              marginLeft: 24 * PREVIEW_SCALE,
+              marginBottom: 40 * PREVIEW_SCALE,
             }]}>
               마리
             </Text>
           </View>
           
-          {/* 골드 라인 */}
-          <View style={[styles.goldDivider, { 
-            width: 130 * PREVIEW_SCALE,
-            marginTop: 10 * PREVIEW_SCALE,
-            marginBottom: 30 * PREVIEW_SCALE,
-          }]} />
-          
           {/* 항목별 카운트 */}
-          {itemPairs.map((pair, idx) => (
-            <View key={idx} style={[styles.itemRow, { marginBottom: 12 * PREVIEW_SCALE }]}>
-              <ItemText item={pair[0]} scale={PREVIEW_SCALE} />
-              {pair[1] && (
-                <>
-                  <Text style={[styles.itemSep, { fontSize: 28 * PREVIEW_SCALE }]}> · </Text>
-                  <ItemText item={pair[1]} scale={PREVIEW_SCALE} />
-                </>
-              )}
-            </View>
-          ))}
+          <Text style={[styles.itemsLine, { 
+            fontSize: 32 * PREVIEW_SCALE,
+            marginTop: 16 * PREVIEW_SCALE,
+          }]}>
+            {itemsLine}
+          </Text>
           
           {/* 메모 (이탤릭 인용) */}
           {record.memo ? (
             <Text style={[styles.memo, { 
-              fontSize: 28 * PREVIEW_SCALE,
-              marginTop: 25 * PREVIEW_SCALE,
+              fontSize: 26 * PREVIEW_SCALE,
+              marginTop: 20 * PREVIEW_SCALE,
             }]} numberOfLines={2}>
               "{record.memo}"
             </Text>
           ) : null}
         </View>
         
-        {/* 하단 - QR + 브랜드 워터마크 */}
-        <View style={[styles.footer, { 
-          bottom: 80 * PREVIEW_SCALE,
-          left: 60 * PREVIEW_SCALE,
-          right: 60 * PREVIEW_SCALE,
+        {/* 푸터 - 광고 영역 */}
+        <View style={[styles.footerBg, { 
+          height: 220 * PREVIEW_SCALE,
         }]}>
-          {/* 좌측: QR + 텍스트 */}
-          <View style={styles.footerLeft}>
+          {/* 골드 상단 라인 */}
+          <View style={[styles.footerTopLine, { height: 2 * PREVIEW_SCALE }]} />
+          
+          {/* 푸터 콘텐츠 */}
+          <View style={[styles.footerContent, { 
+            paddingHorizontal: 56 * PREVIEW_SCALE,
+            paddingTop: 32 * PREVIEW_SCALE,
+          }]}>
+            
+            {/* QR 코드 */}
             <View style={[styles.qrWrap, { 
-              width: 100 * PREVIEW_SCALE, 
-              height: 100 * PREVIEW_SCALE,
-              padding: 6 * PREVIEW_SCALE,
+              width: 176 * PREVIEW_SCALE, 
+              height: 176 * PREVIEW_SCALE,
+              padding: 10 * PREVIEW_SCALE,
             }]}>
               <QRCode
                 value={GOOGLE_PLAY_URL}
-                size={88 * PREVIEW_SCALE}
+                size={156 * PREVIEW_SCALE}
                 backgroundColor="white"
                 color="black"
               />
             </View>
-            <View style={{ marginLeft: 20 * PREVIEW_SCALE }}>
-              <Text style={[styles.footerGet, { fontSize: 20 * PREVIEW_SCALE }]}>GET</Text>
-              <Text style={[styles.footerBrand, { fontSize: 32 * PREVIEW_SCALE }]}>FISHLINE</Text>
-              <Text style={[styles.footerSub, { fontSize: 16 * PREVIEW_SCALE }]}>on Google Play</Text>
+            
+            {/* FISHLINE + on Google Play + RICHCOMPANY */}
+            <View style={[styles.brandTextWrap, { 
+              marginLeft: 32 * PREVIEW_SCALE,
+              flex: 1,
+            }]}>
+              <Text style={[styles.footerBrand, { 
+                fontSize: 84 * PREVIEW_SCALE,
+                lineHeight: 90 * PREVIEW_SCALE,
+              }]}>
+                FISHLINE
+              </Text>
+              <View style={styles.googlePlayRow}>
+                <Text style={[styles.footerSub, { 
+                  fontSize: 28 * PREVIEW_SCALE,
+                }]}>
+                  on Google Play
+                </Text>
+                <Text style={[styles.footerCompany, { 
+                  fontSize: 22 * PREVIEW_SCALE,
+                }]}>
+                  RICHCOMPANY
+                </Text>
+              </View>
             </View>
           </View>
-          
-          {/* 우측: 회사명 워터마크 */}
-          <Text style={[styles.footerCompany, { fontSize: 16 * PREVIEW_SCALE }]}>
-            RICHCOMPANY
-          </Text>
         </View>
       </View>
     </View>
@@ -198,23 +232,16 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
 
 ShareCard.displayName = 'ShareCard';
 
-// 항목 텍스트 (이름 + 골드 숫자)
-const ItemText = ({ item, scale }: { item: { name: string; count: number }; scale: number }) => (
-  <Text style={{ color: '#fff', fontSize: 30 * scale, opacity: 0.9 }}>
-    {item.name} <Text style={{ color: '#d4af37', fontWeight: '600' }}>{item.count}</Text>
-  </Text>
-);
-
-// 날짜 포맷: 2026 . 04 . 27
+// 날짜 포맷: 2026.05.02
 function formatShareDate(iso: string): string {
   const d = new Date(iso);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${y} . ${m} . ${day}`;
+  return `${y}.${m}.${day}`;
 }
 
-// 요일 포맷: SUNDAY
+// 요일 포맷: SATURDAY
 function formatDayOfWeek(iso: string): string {
   const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
   return days[new Date(iso).getDay()];
@@ -258,29 +285,23 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   
-  // 헤더 좌측 (로고)
+  // 골드 액센트 라인 (재사용)
+  brandAccentLine: {
+    backgroundColor: '#d4af37',
+  },
+  
+  // 헤더 좌측
   headerLeft: {
     position: 'absolute',
   },
-  brandLogo: {
-    color: '#fff',
-    fontFamily: 'Georgia',
-    letterSpacing: 6,
-    fontWeight: '500',
-  },
-  brandLine: {
-    height: 1,
-    backgroundColor: '#d4af37',
-    marginTop: 6,
-    marginBottom: 8,
-  },
   brandSub: {
     color: '#fff',
-    letterSpacing: 3,
-    opacity: 0.6,
+    letterSpacing: 4,
+    opacity: 0.85,
+    fontFamily: 'Georgia',
   },
   
-  // 헤더 우측 (날짜)
+  // 헤더 우측
   headerRight: {
     position: 'absolute',
     alignItems: 'flex-end',
@@ -288,13 +309,13 @@ const styles = StyleSheet.create({
   dateMain: {
     color: '#fff',
     letterSpacing: 2,
-    opacity: 0.85,
+    fontWeight: '600',
+    opacity: 0.95,
   },
   daySub: {
     color: '#fff',
-    letterSpacing: 4,
-    opacity: 0.4,
-    marginTop: 4,
+    letterSpacing: 5,
+    opacity: 0.55,
   },
   
   // 메인 영역
@@ -303,8 +324,8 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     color: '#fff',
-    letterSpacing: 5,
-    opacity: 0.65,
+    letterSpacing: 6,
+    opacity: 0.7,
   },
   totalNumberRow: {
     flexDirection: 'row',
@@ -313,26 +334,18 @@ const styles = StyleSheet.create({
   totalNumber: {
     color: '#f4d57a',
     fontFamily: 'Georgia',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   totalUnit: {
     color: '#fff',
     fontFamily: 'Georgia',
     fontStyle: 'italic',
-    opacity: 0.85,
+    opacity: 0.9,
   },
-  goldDivider: {
-    height: 2,
-    backgroundColor: '#d4af37',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  itemSep: {
-    color: '#d4af37',
-    opacity: 0.5,
+  itemsLine: {
+    color: '#fff',
+    opacity: 0.9,
+    letterSpacing: 0.5,
   },
   memo: {
     color: '#fff',
@@ -341,42 +354,50 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   
-  // 하단
-  footer: {
+  // 푸터 (광고 영역)
+  footerBg: {
     position: 'absolute',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.94)',
   },
-  footerLeft: {
+  footerTopLine: {
+    backgroundColor: '#d4af37',
+    opacity: 0.7,
+  },
+  footerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   qrWrap: {
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footerGet: {
-    color: '#fff',
-    letterSpacing: 3,
-    opacity: 0.55,
+  brandTextWrap: {
+    justifyContent: 'flex-start',
   },
   footerBrand: {
-    color: '#fff',
+    color: '#f4d57a',
     fontFamily: 'Georgia',
-    letterSpacing: 4,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 6,
+  },
+  googlePlayRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 4,
   },
   footerSub: {
     color: '#fff',
-    opacity: 0.4,
-    letterSpacing: 1,
-    marginTop: 2,
+    opacity: 0.65,
+    letterSpacing: 2,
   },
   footerCompany: {
-    color: '#fff',
-    letterSpacing: 3,
-    opacity: 0.3,
+    color: '#8b6914',
+    letterSpacing: 4,
+    opacity: 0.85,
   },
 });
