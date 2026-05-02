@@ -1,6 +1,6 @@
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, Share, SafeAreaView, Image, Modal, Dimensions,
+  Alert, SafeAreaView, Image, Modal,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
@@ -8,12 +8,10 @@ import {
   getAllHistory, deleteHistory, HistoryRecord, formatDate,
 } from '@/lib/historyService';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 export default function HistoryScreen() {
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   
-  // ⭐ 사진 큰 화면 보기 모달
+  // 사진 큰 화면 보기 모달
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
@@ -45,25 +43,9 @@ export default function HistoryScreen() {
     );
   };
 
-  const handleShareRecord = async (record: HistoryRecord) => {
-    const itemsText = record.items.map(i => `${i.name}: ${i.count}마리`).join('\n');
-    const message = `🎣 FISHLINE 조과 기록 🎣
-
-📅 ${formatDate(record.date)}
-📝 ${record.memo}
-
-${itemsText}
-
-🏆 총 ${record.totalCount}마리
-
-▶ FISHLINE 앱으로 만든 기록:
-https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
-
-    try {
-      await Share.share({ message });
-    } catch (e) {
-      console.log('공유 오류:', e);
-    }
+  // ⭐ 공유 버튼 → 자랑 카드 화면으로 이동
+  const handleShareRecord = (record: HistoryRecord) => {
+    router.push(`/share-card?recordId=${record.id}`);
   };
 
   return (
@@ -101,7 +83,7 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
 
           {records.map(record => (
             <View key={record.id} style={styles.card}>
-              {/* ⭐ 히어로 이미지 영역 (사진 있을 때만) */}
+              {/* 히어로 이미지 영역 (사진 있을 때만) */}
               {record.photoUri && (
                 <TouchableOpacity 
                   activeOpacity={0.9}
@@ -113,11 +95,9 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
                     style={styles.heroImage}
                     resizeMode="cover"
                   />
-                  {/* 우상단 총마리수 배지 */}
                   <View style={styles.heroBadge}>
                     <Text style={styles.heroBadgeText}>총 {record.totalCount}마리</Text>
                   </View>
-                  {/* 좌하단 그라데이션 + 날짜 */}
                   <View style={styles.heroDateWrap}>
                     <Text style={styles.heroDateText}>📅 {formatDate(record.date)}</Text>
                   </View>
@@ -132,12 +112,10 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
                 </View>
               )}
 
-              {/* 정보 영역 - 사진 있을 때 padding 조정 */}
+              {/* 정보 영역 */}
               <View style={record.photoUri ? styles.infoSectionWithPhoto : undefined}>
-                {/* 메모 */}
                 <Text style={styles.cardMemo}>{record.memo || '(메모 없음)'}</Text>
 
-                {/* 항목별 카운트 */}
                 <View style={styles.itemsWrap}>
                   {record.items.map((item, idx) => (
                     <View key={idx} style={styles.itemChip}>
@@ -147,13 +125,12 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
                   ))}
                 </View>
 
-                {/* 액션 버튼 */}
                 <View style={styles.cardActions}>
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={[styles.actionBtn, styles.shareBtn]}
                     onPress={() => handleShareRecord(record)}
                   >
-                    <Text style={styles.actionBtnText}>🔗 공유</Text>
+                    <Text style={[styles.actionBtnText, styles.shareBtnText]}>📤 자랑하기</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.actionBtn, styles.deleteBtn]}
@@ -168,7 +145,7 @@ https://play.google.com/store/apps/details?id=com.richcompany.fishlineapp`;
         </ScrollView>
       )}
 
-      {/* ⭐ 사진 큰 화면 모달 */}
+      {/* 사진 큰 화면 모달 */}
       <Modal
         visible={!!previewPhoto}
         transparent
@@ -220,7 +197,6 @@ const styles = StyleSheet.create({
   logo: { fontSize: 22, fontWeight: '700', letterSpacing: 4, color: '#e8c96a' },
   logoSub: { fontSize: 8, letterSpacing: 4, color: '#8a7a5a', marginTop: 2 },
 
-  // 빈 상태
   emptyWrap: {
     flex: 1,
     alignItems: 'center',
@@ -254,17 +230,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // 카드
   card: {
     backgroundColor: '#0f0f0f',
     borderWidth: 1,
     borderColor: 'rgba(201,168,76,0.15)',
     borderRadius: 6,
     marginBottom: 12,
-    overflow: 'hidden', // ⭐ 사진 모서리 깔끔하게
+    overflow: 'hidden',
   },
   
-  // ⭐ 히어로 이미지
   heroImageWrap: {
     position: 'relative',
     width: '100%',
@@ -309,7 +283,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   
-  // ⭐ 사진 있을 때 정보 영역 패딩
   infoSectionWithPhoto: {
     padding: 16,
   },
@@ -342,10 +315,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
     lineHeight: 20,
-    paddingHorizontal: 16, // 사진 없을 땐 자체 패딩 (사진 있으면 부모가 처리)
+    paddingHorizontal: 16,
   },
 
-  // 항목 칩
   itemsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -374,7 +346,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // 액션 버튼
   cardActions: {
     flexDirection: 'row',
     gap: 8,
@@ -396,6 +367,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.5,
   },
+  // ⭐ 자랑하기 버튼 강조
+  shareBtn: {
+    backgroundColor: 'rgba(201,168,76,0.15)',
+    borderColor: 'rgba(201,168,76,0.5)',
+  },
+  shareBtnText: {
+    color: '#e8c96a',
+    fontWeight: '700',
+  },
   deleteBtn: {
     borderColor: 'rgba(224,85,85,0.3)',
   },
@@ -403,7 +383,6 @@ const styles = StyleSheet.create({
     color: '#e05555',
   },
   
-  // ⭐ 사진 큰 화면 모달
   previewOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.95)',

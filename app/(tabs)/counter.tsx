@@ -14,7 +14,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, Alert, Modal,
   Platform, AppState, DeviceEventEmitter, Share,
-  Image,
+  Image, KeyboardAvoidingView,
 } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
@@ -576,69 +576,79 @@ by 웜부자 🐟`,
       {/* ⭐ 조과 저장 모달 */}
       <Modal visible={showSaveRecord} transparent animationType="fade"
         onRequestClose={() => setShowSaveRecord(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>💾 조과 저장</Text>
-
-            {/* 오늘의 조과 미리보기 */}
-            <View style={styles.recordPreview}>
-              <Text style={styles.recordPreviewTitle}>오늘의 조과</Text>
-              <View style={styles.recordPreviewItems}>
-                {items.filter(i => i.count > 0).map((i, idx) => (
-                  <View key={idx} style={styles.recordChip}>
-                    <Text style={styles.recordChipName}>{i.name}</Text>
-                    <Text style={styles.recordChipCount}>{i.count}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.recordTotal}>
-                총 {items.reduce((s, i) => s + i.count, 0)}마리
-              </Text>
-            </View>
-
-                       {/* ⭐ 사진 첨부 영역 */}
-            <Text style={styles.memoLabel}>📷 사진 (선택)</Text>
-            {recordPhoto ? (
-              <View style={styles.photoPreviewBox}>
-                <Image source={{ uri: recordPhoto }} style={styles.photoPreview} />
-                <TouchableOpacity style={styles.photoRemoveBtn} onPress={handleRemovePhoto}>
-                  <Text style={styles.photoRemoveBtnText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity 
-                style={styles.photoAddBtn} 
-                onPress={handleAddPhoto}
-                disabled={photoLoading}
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalBox, { maxHeight: '85%' }]}>
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
               >
-                <Text style={styles.photoAddBtnText}>
-                  {photoLoading ? '⏳ 처리 중...' : '+ 사진 추가하기'}
-                </Text>
-              </TouchableOpacity>
-            )}
+                <Text style={styles.modalTitle}>💾 조과 저장</Text>
 
-            {/* 메모 입력 */}
-            <Text style={styles.memoLabel}>메모</Text>
-            <TextInput
-              style={[styles.input, styles.memoInput]}
-              placeholder="예: 2026년 4월 23일 무창포 브이호 쭈갑낚시"
-              placeholderTextColor="#3a3020"
-              value={recordMemo}
-              onChangeText={setRecordMemo}
-              multiline
-              maxLength={80}
-            />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel}
-                onPress={() => { setShowSaveRecord(false); setRecordMemo(''); }}>
-                <Text style={styles.modalCancelText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirm} onPress={handleConfirmSaveRecord}>
-                <Text style={styles.modalConfirmText}>💾 저장</Text>
-              </TouchableOpacity>
-             </View>
+                {/* 오늘의 조과 미리보기 */}
+                <View style={styles.recordPreview}>
+                  <Text style={styles.recordPreviewTitle}>오늘의 조과</Text>
+                  <View style={styles.recordPreviewItems}>
+                    {items.filter(i => i.count > 0).map((i, idx) => (
+                      <View key={idx} style={styles.recordChip}>
+                        <Text style={styles.recordChipName}>{i.name}</Text>
+                        <Text style={styles.recordChipCount}>{i.count}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.recordTotal}>
+                    총 {items.reduce((s, i) => s + i.count, 0)}마리
+                  </Text>
+                </View>
+
+                {/* ⭐ 사진 첨부 영역 */}
+                <Text style={styles.memoLabel}>📷 사진 (선택)</Text>
+                {recordPhoto ? (
+                  <View style={styles.photoPreviewBox}>
+                    <Image source={{ uri: recordPhoto }} style={styles.photoPreview} />
+                    <TouchableOpacity style={styles.photoRemoveBtn} onPress={handleRemovePhoto}>
+                      <Text style={styles.photoRemoveBtnText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.photoAddBtn} 
+                    onPress={handleAddPhoto}
+                    disabled={photoLoading}
+                  >
+                    <Text style={styles.photoAddBtnText}>
+                      {photoLoading ? '⏳ 처리 중...' : '+ 사진 추가하기'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* 메모 입력 */}
+                <Text style={styles.memoLabel}>메모</Text>
+                <TextInput
+                  style={[styles.input, styles.memoInput]}
+                  placeholder="예: 2026년 4월 23일 무창포 브이호 쭈갑낚시"
+                  placeholderTextColor="#3a3020"
+                  value={recordMemo}
+                  onChangeText={setRecordMemo}
+                  multiline
+                  maxLength={80}
+                />
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.modalCancel}
+                    onPress={() => { setShowSaveRecord(false); setRecordMemo(''); setRecordPhoto(null); }}>
+                    <Text style={styles.modalCancelText}>취소</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalConfirm} onPress={handleConfirmSaveRecord}>
+                    <Text style={styles.modalConfirmText}>💾 저장</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ⭐ 사진 소스 선택 모달 */}

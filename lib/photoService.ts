@@ -14,9 +14,9 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 
 const PHOTO_DIR = FileSystem.documentDirectory + 'fishline_photos/';
-const TARGET_WIDTH = 300;
-const TARGET_HEIGHT = 400;
-const COMPRESS_QUALITY = 0.7; // 70% 품질 (약 100KB 수준)
+const TARGET_WIDTH = 720;  // ⭐ 300 → 720 (자랑 카드 화질 개선)
+const TARGET_HEIGHT = 960;
+const COMPRESS_QUALITY = 0.85;  // ⭐ 0.7 → 0.85 (화질 약간 더)
 
 // 사진 저장 폴더 생성 (없으면)
 const ensurePhotoDir = async (): Promise<void> => {

@@ -37,7 +37,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.ico"
     },
-   "plugins": [
+"plugins": [
   "expo-router",
   "expo-web-browser",
   "./plugins/withFloatingButton",
@@ -47,6 +47,14 @@
     {
       "photosPermission": "FISHLINE이 조과 사진 첨부를 위해 사진 접근 권한이 필요합니다.",
       "cameraPermission": "FISHLINE이 조과 사진 촬영을 위해 카메라 권한이 필요합니다."
+    }
+  ],
+  [
+    "expo-media-library",
+    {
+      "photosPermission": "FISHLINE이 조과 자랑 카드를 갤러리에 저장하기 위해 권한이 필요합니다.",
+      "savePhotosPermission": "FISHLINE이 조과 자랑 카드를 갤러리에 저장하기 위해 권한이 필요합니다.",
+      "isAccessMediaLocationEnabled": false
     }
   ]
 ],
