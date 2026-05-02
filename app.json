@@ -17,20 +17,22 @@
       "supportsTablet": true,
       "icon": "./assets/images/apple-touch-icon.png"
     },
-    "android": {
+"android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-chrome-192x192.png",
         "backgroundColor": "#080808"
       },
       "versionCode": 8,
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.richcompany.fishlineapp",
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
+      "predictiveBackGestureEnabled": false,
       "permissions": [
         "SYSTEM_ALERT_WINDOW",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_SPECIAL_USE"
-      ]
+      ],
+      "intentFilters": [] 
     },
     "web": {
       "bundler": "metro",
