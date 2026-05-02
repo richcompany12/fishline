@@ -37,12 +37,19 @@
       "output": "static",
       "favicon": "./assets/images/favicon.ico"
     },
-    "plugins": [
-      "expo-router",
-      "expo-web-browser",
-      "./plugins/withFloatingButton",
-      "@react-native-google-signin/google-signin"
-      ],
+   "plugins": [
+  "expo-router",
+  "expo-web-browser",
+  "./plugins/withFloatingButton",
+  "@react-native-google-signin/google-signin",
+  [
+    "expo-image-picker",
+    {
+      "photosPermission": "FISHLINE이 조과 사진 첨부를 위해 사진 접근 권한이 필요합니다.",
+      "cameraPermission": "FISHLINE이 조과 사진 촬영을 위해 카메라 권한이 필요합니다."
+    }
+  ]
+],
     "experiments": {
       "typedRoutes": true
     },

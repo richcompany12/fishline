@@ -14,6 +14,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, Alert, Modal,
   Platform, AppState, DeviceEventEmitter, Share,
+  Image,
 } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
@@ -24,6 +25,7 @@ import {
   listenFloatingSyncCount,
 } from '@/lib/FloatingService';
 import { saveHistory, generateDefaultMemo } from '@/lib/historyService';
+import { pickFromGallery, takePhoto } from '@/lib/photoService';
 
 export default function CounterScreen() {
  const { items, curId, setCurId, addItem,
@@ -45,8 +47,11 @@ export default function CounterScreen() {
   const [actionTargetId, setActionTargetId] = useState<string>('');
 
   // ⭐ 조과 저장 모달
-  const [showSaveRecord, setShowSaveRecord] = useState(false);
+ const [showSaveRecord, setShowSaveRecord] = useState(false);
   const [recordMemo, setRecordMemo] = useState('');
+  const [recordPhoto, setRecordPhoto] = useState<string | null>(null);
+  const [showPhotoSource, setShowPhotoSource] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
 
   const curItem = items.find(i => i.id === curId) || items[0];
 
@@ -267,18 +272,65 @@ by 웜부자 🐟`,
     }
     // 메모 기본값 자동 생성
     setRecordMemo(generateDefaultMemo(items));
+    setRecordPhoto(null); // ⭐ 사진 초기화
     setShowSaveRecord(true);
   };
 
-  // ⭐ 조과 저장 확정
+  // ⭐ 사진 추가 버튼 → 액션시트 열기
+  const handleAddPhoto = () => {
+    setShowPhotoSource(true);
+  };
+
+  // ⭐ 갤러리에서 선택
+  const handlePickGallery = async () => {
+    setShowPhotoSource(false);
+    setPhotoLoading(true);
+    try {
+      const uri = await pickFromGallery();
+      if (uri) {
+        setRecordPhoto(uri);
+      } else {
+        // 권한 거부 또는 취소
+      }
+    } catch (e) {
+      Alert.alert('오류', '사진을 불러오지 못했습니다.');
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
+  // ⭐ 카메라로 촬영
+  const handleTakePhoto = async () => {
+    setShowPhotoSource(false);
+    setPhotoLoading(true);
+    try {
+      const uri = await takePhoto();
+      if (uri) {
+        setRecordPhoto(uri);
+      }
+    } catch (e) {
+      Alert.alert('오류', '카메라를 사용할 수 없습니다.');
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
+  // ⭐ 사진 제거
+  const handleRemovePhoto = () => {
+    setRecordPhoto(null);
+  };
+
+  // ⭐ 조과 저장 확정 (photoUri 추가)
   const handleConfirmSaveRecord = async () => {
     try {
       await saveHistory(
         recordMemo.trim() || '제목 없음',
-        items.map(i => ({ name: i.name, count: i.count }))
+        items.map(i => ({ name: i.name, count: i.count })),
+        recordPhoto || undefined  // ⭐ 사진 URI 전달
       );
       setShowSaveRecord(false);
       setRecordMemo('');
+      setRecordPhoto(null);  // ⭐ 사진 초기화
       Alert.alert(
         '✅ 저장 완료',
         '조과가 히스토리에 저장됐어요!',
@@ -544,6 +596,27 @@ by 웜부자 🐟`,
               </Text>
             </View>
 
+                       {/* ⭐ 사진 첨부 영역 */}
+            <Text style={styles.memoLabel}>📷 사진 (선택)</Text>
+            {recordPhoto ? (
+              <View style={styles.photoPreviewBox}>
+                <Image source={{ uri: recordPhoto }} style={styles.photoPreview} />
+                <TouchableOpacity style={styles.photoRemoveBtn} onPress={handleRemovePhoto}>
+                  <Text style={styles.photoRemoveBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.photoAddBtn} 
+                onPress={handleAddPhoto}
+                disabled={photoLoading}
+              >
+                <Text style={styles.photoAddBtnText}>
+                  {photoLoading ? '⏳ 처리 중...' : '+ 사진 추가하기'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {/* 메모 입력 */}
             <Text style={styles.memoLabel}>메모</Text>
             <TextInput
@@ -563,9 +636,41 @@ by 웜부자 🐟`,
               <TouchableOpacity style={styles.modalConfirm} onPress={handleConfirmSaveRecord}>
                 <Text style={styles.modalConfirmText}>💾 저장</Text>
               </TouchableOpacity>
-            </View>
+             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* ⭐ 사진 소스 선택 모달 */}
+      <Modal visible={showPhotoSource} transparent animationType="fade"
+        onRequestClose={() => setShowPhotoSource(false)}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1}
+          onPress={() => setShowPhotoSource(false)}
+        >
+          <View style={styles.actionMenuBox}>
+            <Text style={styles.actionMenuTitle}>사진 첨부</Text>
+            <Text style={styles.actionMenuSub}>어디서 가져올까요?</Text>
+            
+            <TouchableOpacity style={styles.actionMenuItem} onPress={handleTakePhoto}>
+              <Text style={styles.actionMenuIcon}>📷</Text>
+              <Text style={styles.actionMenuText}>카메라로 촬영</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionMenuItem} onPress={handlePickGallery}>
+              <Text style={styles.actionMenuIcon}>🖼️</Text>
+              <Text style={styles.actionMenuText}>갤러리에서 선택</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionMenuCancel} 
+              onPress={() => setShowPhotoSource(false)}
+            >
+              <Text style={styles.actionMenuCancelText}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -670,4 +775,41 @@ const styles = StyleSheet.create({
   recordTotal:        { fontSize: 12, color: '#c9a84c', fontWeight: '700', textAlign: 'right' },
   memoLabel:          { fontSize: 11, color: '#8a7a5a', marginBottom: 6, letterSpacing: 1 },
   memoInput:          { minHeight: 60, textAlignVertical: 'top' },
+
+  // ⭐ 사진 첨부 스타일
+  photoAddBtn:        { 
+                        backgroundColor: '#0f0f0f', 
+                        borderWidth: 1, 
+                        borderColor: 'rgba(201,168,76,0.3)', 
+                        borderStyle: 'dashed',
+                        borderRadius: 4, 
+                        padding: 20, 
+                        alignItems: 'center', 
+                        marginBottom: 16 
+                      },
+  photoAddBtnText:    { color: '#8a7a5a', fontSize: 13, letterSpacing: 1 },
+  photoPreviewBox:    { 
+                        position: 'relative', 
+                        marginBottom: 16, 
+                        alignItems: 'center' 
+                      },
+  photoPreview:       { 
+                        width: '100%', 
+                        height: 200, 
+                        borderRadius: 4, 
+                        borderWidth: 1, 
+                        borderColor: 'rgba(201,168,76,0.3)' 
+                      },
+  photoRemoveBtn:     { 
+                        position: 'absolute', 
+                        top: 8, 
+                        right: 8, 
+                        width: 28, 
+                        height: 28, 
+                        borderRadius: 14, 
+                        backgroundColor: 'rgba(0,0,0,0.7)', 
+                        alignItems: 'center', 
+                        justifyContent: 'center' 
+                      },
+  photoRemoveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
