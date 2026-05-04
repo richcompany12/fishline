@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, Switch, AppState, TouchableOpacity, Share } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '@/store/useAppStore';
 import { startFloatingButton, stopFloatingButton, updateFloatingItems, updateFloatingStyle, FloatSize, FloatColor, listenFloatingStoppedByUser } from '@/lib/FloatingService';
@@ -19,30 +20,30 @@ export default function SettingsScreen() {
   const [floatSize, setFloatSize] = useState<FloatSize>('M');
   const [floatColor, setFloatColor] = useState<FloatColor>('GOLD');
 
-  // [토글/스타일 상태 복원] 앱 시작 시 저장된 값 불러오기
-  useEffect(() => {
-    const loadStates = async () => {
-      try {
-        const stored = await AsyncStorage.getItem(TOGGLE_KEY);
-        if (stored === 'true') {
-          setFloatingEnabled(true);
+  // [토글/스타일 상태 복원] 화면 포커스 받을 때마다 다시 읽기 (다른 탭에서 변경된 경우 반영)
+  useFocusEffect(
+    useCallback(() => {
+      const loadStates = async () => {
+        try {
+          const stored = await AsyncStorage.getItem(TOGGLE_KEY);
+          setFloatingEnabled(stored === 'true');
+          
+          const storedSize = await AsyncStorage.getItem(SIZE_KEY);
+          if (storedSize === 'S' || storedSize === 'M' || storedSize === 'L') {
+            setFloatSize(storedSize);
+          }
+          
+          const storedColor = await AsyncStorage.getItem(COLOR_KEY);
+          if (storedColor === 'GOLD' || storedColor === 'BLUE' || storedColor === 'RED') {
+            setFloatColor(storedColor);
+          }
+        } catch (e) {
+          console.log('설정 불러오기 오류:', e);
         }
-        
-        const storedSize = await AsyncStorage.getItem(SIZE_KEY);
-        if (storedSize === 'S' || storedSize === 'M' || storedSize === 'L') {
-          setFloatSize(storedSize);
-        }
-        
-        const storedColor = await AsyncStorage.getItem(COLOR_KEY);
-        if (storedColor === 'GOLD' || storedColor === 'BLUE' || storedColor === 'RED') {
-          setFloatColor(storedColor);
-        }
-      } catch (e) {
-        console.log('설정 불러오기 오류:', e);
-      }
-    };
-    loadStates();
-  }, []);
+      };
+      loadStates();
+    }, [])
+  );
 
   // ⭐ 플로팅에서 4초 종료한 경우 → 토글 자동 OFF
   useEffect(() => {

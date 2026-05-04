@@ -585,20 +585,24 @@ private fun applyStyleToFloatingButton() {
      * [BUG7 수정] 플로팅 버튼에서 카운트 변경 시 JS(React Native)로 즉시 이벤트 전송.
      * counter.tsx의 DeviceEventEmitter.addListener('FloatingSyncCount', ...) 가 수신.
      */
-    private fun emitSyncToJS() {
-        try {
-            val reactContext = (application as? ReactApplication)
-                ?.reactNativeHost
-                ?.reactInstanceManager
-                ?.currentReactContext
-            reactContext
-                ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                ?.emit("FloatingSyncCount", currentItemsJson)
-        } catch (e: Exception) {
-            // ReactContext가 아직 준비 안 됐거나 앱이 백그라운드일 때 — 무시
-            e.printStackTrace()
+private fun emitSyncToJS() {
+    try {
+        val payload = JSONObject().apply {
+            put("items", JSONArray(currentItemsJson))
+            put("selectedIndex", currentSelectedIndex)
         }
+        
+        val reactContext = (application as? ReactApplication)
+            ?.reactNativeHost
+            ?.reactInstanceManager
+            ?.currentReactContext
+        reactContext
+            ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            ?.emit("FloatingSyncCount", payload.toString())
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
+}
 
     // ─────────────────────────────────────────────
     // ⭐ JS에 "사용자가 플로팅 종료함" 이벤트 emit

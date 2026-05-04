@@ -17,15 +17,24 @@ import {
   Image, KeyboardAvoidingView,
 } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import {
   updateFloatingItems,
   getFloatingItems,
   listenFloatingSyncCount,
+  startFloatingButton,
+  stopFloatingButton,
+  listenFloatingStoppedByUser,
 } from '@/lib/FloatingService';
 import { saveHistory, generateDefaultMemo } from '@/lib/historyService';
 import { pickFromGallery, takePhoto } from '@/lib/photoService';
+import AdModal from '@/components/AdModal';
+import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
+
+const TOGGLE_KEY = 'floating_enabled';
 
 export default function CounterScreen() {
  const { items, curId, setCurId, addItem,
@@ -35,8 +44,7 @@ export default function CounterScreen() {
 
   const [newName,  setNewName]  = useState('');
   const [showAdd,  setShowAdd]  = useState(false);
-  const [logs,     setLogs]     = useState<{ name: string; count: number; time: string }[]>([]);
-
+ 
   // 이름 변경 모달
   const [showRename, setShowRename] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string>('');
@@ -52,6 +60,12 @@ export default function CounterScreen() {
   const [recordPhoto, setRecordPhoto] = useState<string | null>(null);
   const [showPhotoSource, setShowPhotoSource] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
+
+  // ⭐ 플로팅 버튼 ON/OFF 상태
+  const [isFloatingOn, setIsFloatingOn] = useState(false);
+  
+  // ⭐ 광고 모달
+  const [adVisible, setAdVisible] = useState(false);
 
   const curItem = items.find(i => i.id === curId) || items[0];
 
@@ -70,35 +84,31 @@ export default function CounterScreen() {
     );
   }, []);
 
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-    const idx = items.findIndex(i => i.id === curId);
-    updateFloatingItems(
-      items.map(i => ({ name: i.name, count: i.count })),
-      idx >= 0 ? idx : 0,
-      true
-    );
-  }, [items, curId]);
+useEffect(() => {
+  if (Platform.OS !== 'android') return;
+  const idx = items.findIndex(i => i.id === curId);
+  updateFloatingItems(
+    items.map(i => ({ name: i.name, count: i.count })),
+    idx >= 0 ? idx : 0,
+    true
+  );
+}, [items, curId]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
-    const sub = listenFloatingSyncCount(({ items: floatItems }) => {
-      const currentItems = itemsRef.current;
-      floatItems.forEach((floatItem) => {
-        const storeItem = currentItems.find(i => i.name === floatItem.name);
-        if (!storeItem) return;
-        const diff = floatItem.count - storeItem.count;
-        if (diff > 0) {
-          for (let k = 0; k < diff; k++) plusCount(storeItem.id);
-          setLogs(prev => [{
-            name:  floatItem.name,
-            count: floatItem.count,
-            time:  new Date().toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' }),
-          }, ...prev].slice(0, 10));
-        }
-      });
-    });
+const sub = listenFloatingSyncCount(({ items: floatItems }) => {
+  const currentItems = itemsRef.current;
+  floatItems.forEach((floatItem) => {
+    const storeItem = currentItems.find(i => i.name === floatItem.name);
+    if (!storeItem) return;
+    const diff = floatItem.count - storeItem.count;
+    if (diff > 0) {
+      for (let k = 0; k < diff; k++) plusCount(storeItem.id);
+    }
+  });
+});
+
 
     return () => sub.remove();
   }, []);
@@ -145,11 +155,6 @@ export default function CounterScreen() {
   const handlePlus = () => {
     if (!curItem) return;
     plusCount(curItem.id);
-    setLogs(prev => [{
-      name:  curItem.name,
-      count: curItem.count + 1,
-      time:  new Date().toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' }),
-    }, ...prev].slice(0, 10));
   };
 
   const handleMinus = () => {
@@ -232,7 +237,7 @@ export default function CounterScreen() {
       '모든 카운트가 0으로 초기화됩니다.\n정말 리셋할까요?',
       [
         { text: '취소', style: 'cancel' },
-        { text: '리셋', style: 'destructive', onPress: () => { resetAll(); setLogs([]); } },
+        { text: '리셋', style: 'destructive', onPress: () => { resetAll(); } },
       ]
     );
   };
@@ -240,6 +245,50 @@ export default function CounterScreen() {
   const handleSelectItem = (id: string) => {
     setCurId(id);
   };
+
+  // ⭐ 플로팅 버튼 ON/OFF 토글 (settings 탭과 동일한 AsyncStorage 키 사용)
+  const handleToggleFloating = async () => {
+    try {
+      if (isFloatingOn) {
+        await AsyncStorage.setItem(TOGGLE_KEY, 'false');
+        setIsFloatingOn(false);
+        await stopFloatingButton();
+      } else {
+        await AsyncStorage.setItem(TOGGLE_KEY, 'true');
+        setIsFloatingOn(true);
+        
+        // ⭐ 하루 1회 광고 모달 (settings 탭과 동일 로직)
+        const show = await shouldShowAd(AD_KEY_FLOATING);
+        if (show) {
+          await markAdShown(AD_KEY_FLOATING);
+          setAdVisible(true);
+        }
+        
+        await startFloatingButton();
+      }
+    } catch (e) {
+      console.log('플로팅 토글 오류:', e);
+    }
+  };
+
+  // ⭐ 화면 포커스 받을 때마다 AsyncStorage에서 상태 다시 읽기 (settings 탭에서 변경된 경우 반영)
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem(TOGGLE_KEY).then(v => {
+        setIsFloatingOn(v === 'true');
+      });
+    }, [])
+  );
+
+  // ⭐ 사용자가 플로팅 버튼을 길게 눌러 종료한 경우 동기화
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const sub = listenFloatingStoppedByUser(() => {
+      AsyncStorage.setItem(TOGGLE_KEY, 'false');
+      setIsFloatingOn(false);
+    });
+    return () => sub.remove();
+  }, []);
 
   // ⭐ 앱 공유
   const handleShare = async () => {
@@ -354,9 +403,15 @@ by 웜부자 🐟`,
           <Text style={styles.logo}>FISHLINE</Text>
           <Text style={styles.logoSub}>CATCH COUNTER</Text>
         </View>
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.7}>
-          <Text style={styles.shareBtnIcon}>🔗</Text>
-          <Text style={styles.shareBtnText}>공유</Text>
+        <TouchableOpacity 
+          style={[styles.floatBtn, isFloatingOn && styles.floatBtnActive]} 
+          onPress={handleToggleFloating} 
+          activeOpacity={0.7}
+        >
+          <Text style={styles.floatBtnIcon}>{isFloatingOn ? '🟢' : '⚪'}</Text>
+          <Text style={[styles.floatBtnText, isFloatingOn && styles.floatBtnTextActive]}>
+            {isFloatingOn ? '플로팅 ON' : '플로팅 OFF'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -415,27 +470,31 @@ by 웜부자 🐟`,
         </View>
 
         {/* 전체 현황 */}
+        {/* ⭐ 액션 버튼 영역 (조과 저장 + 히스토리) */}
+        {items.length > 0 && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionSaveBtn}
+              onPress={handleOpenSaveRecord}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionSaveBtnText}>💾  조과 저장</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionHistoryBtn}
+              onPress={() => router.push('/history')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionHistoryBtnText}>☰  히스토리</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* 전체 현황 */}
         {items.length > 0 && (
           <View style={styles.panel}>
-            {/* ⭐ 헤더: TOTAL RECORD + 저장/히스토리 버튼 */}
             <View style={styles.panelHeader}>
               <Text style={styles.panelTitle}>TOTAL RECORD</Text>
-              <View style={styles.headerBtns}>
-                <TouchableOpacity
-                  style={styles.saveBtn}
-                  onPress={handleOpenSaveRecord}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.saveBtnText}>💾 조과 저장</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.historyBtn}
-                  onPress={() => router.push('/history')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.historyBtnText}>📖</Text>
-                </TouchableOpacity>
-              </View>
             </View>
 
             {items.map(item => (
@@ -463,20 +522,7 @@ by 웜부자 🐟`,
           </View>
         )}
 
-        {/* 최근 기록 */}
-        {logs.length > 0 && (
-          <View style={styles.panel}>
-            <Text style={styles.panelTitle}>RECENT LOG</Text>
-            {logs.map((l, i) => (
-              <View key={i} style={styles.logItem}>
-                <Text style={styles.logName}>{l.name}</Text>
-                <Text style={styles.logTime}>{l.time}</Text>
-                <Text style={styles.logCnt}>{l.count}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
+ 
       </ScrollView>
 
       {/* 항목 추가 모달 */}
@@ -682,6 +728,13 @@ by 웜부자 🐟`,
           </View>
         </TouchableOpacity>
       </Modal>
+  
+        {/* ⭐ 광고 모달 */}
+      <AdModal
+        visible={adVisible}
+        storagePathOrUrl="ads/floating_start.jpg"
+        onClose={() => setAdVisible(false)}
+      />
     </View>
   );
 }
@@ -697,6 +750,12 @@ const styles = StyleSheet.create({
   shareBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(201,168,76,0.3)', borderRadius: 20 },
   shareBtnIcon:    { fontSize: 13 },
   shareBtnText:    { fontSize: 11, color: '#c9a84c', fontWeight: '600', letterSpacing: 1 },
+  // ⭐ 플로팅 버튼 토글
+  floatBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(201,168,76,0.3)', borderRadius: 20 },
+  floatBtnActive:  { backgroundColor: 'rgba(201,168,76,0.15)', borderColor: '#c9a84c' },
+  floatBtnIcon:    { fontSize: 11 },
+  floatBtnText:    { fontSize: 11, color: '#c9a84c', fontWeight: '600', letterSpacing: 1 },
+  floatBtnTextActive: { color: '#c9a84c', fontWeight: '700' },
 
   tabsWrap:        { gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   tab:             { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(201,168,76,0.15)', borderRadius: 3, position: 'relative' },
@@ -725,6 +784,13 @@ const styles = StyleSheet.create({
   panel:           { margin: 16, marginTop: 0, backgroundColor: '#0f0f0f', borderWidth: 1, borderColor: 'rgba(201,168,76,0.15)', borderRadius: 4, padding: 16, marginBottom: 10 },
   panelHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   panelTitle:      { fontSize: 9, letterSpacing: 4, color: '#c9a84c', fontWeight: '500' },
+
+    // ⭐ 액션 버튼 영역 (조과 저장 + 히스토리)
+  actionRow:       { flexDirection: 'row', marginHorizontal: 16, marginTop: 8, marginBottom: 12, gap: 8 },
+  actionSaveBtn:   { flex: 2, paddingVertical: 13, backgroundColor: '#c9a84c', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  actionSaveBtnText: { fontSize: 13, color: '#080808', fontWeight: '700', letterSpacing: 1 },
+  actionHistoryBtn: { flex: 1, paddingVertical: 13, backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: 'rgba(201,168,76,0.4)', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  actionHistoryBtnText: { fontSize: 12, color: '#c9a84c', fontWeight: '600', letterSpacing: 1 },
 
   // ⭐ 헤더 버튼들
   headerBtns:      { flexDirection: 'row', gap: 6 },

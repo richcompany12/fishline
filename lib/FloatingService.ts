@@ -142,8 +142,17 @@ export function listenFloatingSyncCount(
 ): EmitterSubscription {
   return DeviceEventEmitter.addListener('FloatingSyncCount', (rawJson: string) => {
     try {
-      const items: FloatItem[] = JSON.parse(rawJson || '[]');
-      callback({ items, selected: 0 });
+      const parsed = JSON.parse(rawJson || '{}');
+      
+      if (Array.isArray(parsed)) {
+        callback({ items: parsed, selected: -1 });
+      } else {
+        const items: FloatItem[] = parsed.items || [];
+        const selected: number = typeof parsed.selectedIndex === 'number' 
+          ? parsed.selectedIndex 
+          : -1;
+        callback({ items, selected });
+      }
     } catch (e) {
       console.log('[FloatingService] FloatingSyncCount 파싱 오류:', e);
     }

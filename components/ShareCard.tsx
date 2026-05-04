@@ -21,7 +21,7 @@ import { HistoryRecord } from '@/lib/historyService';
 
 // 카드 사이즈 (9:16 비율, 인스타 스토리 표준)
 const CARD_WIDTH = 1080;
-const CARD_HEIGHT = 1920;
+const CARD_HEIGHT = 1350;
 
 // 미리보기용 스케일 (실제 캡처 시 1080×1920, 화면에서는 380px로 축소)
 const PREVIEW_WIDTH = 380;
@@ -87,29 +87,29 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
         
         {/* 헤더 좌상단 - CATCH OF THE DAY */}
         <View style={[styles.headerLeft, { 
-          top: 60 * PREVIEW_SCALE, 
-          left: 56 * PREVIEW_SCALE,
+          top: 50 * PREVIEW_SCALE, 
+          left: 50 * PREVIEW_SCALE,
         }]}>
           <View style={[styles.brandAccentLine, { 
-            width: 110 * PREVIEW_SCALE, 
+            width: 100 * PREVIEW_SCALE, 
             height: 5 * PREVIEW_SCALE,
-            marginBottom: 14 * PREVIEW_SCALE,
+            marginBottom: 12 * PREVIEW_SCALE,
           }]} />
-          <Text style={[styles.brandSub, { fontSize: 28 * PREVIEW_SCALE }]}>
+          <Text style={[styles.brandSub, { fontSize: 26 * PREVIEW_SCALE }]}>
             CATCH OF THE DAY
           </Text>
         </View>
         
         {/* 헤더 우상단 - 날짜 */}
         <View style={[styles.headerRight, { 
-          top: 60 * PREVIEW_SCALE, 
-          right: 56 * PREVIEW_SCALE,
+          top: 50 * PREVIEW_SCALE, 
+          right: 50 * PREVIEW_SCALE,
         }]}>
-          <Text style={[styles.dateMain, { fontSize: 36 * PREVIEW_SCALE }]}>
+          <Text style={[styles.dateMain, { fontSize: 32 * PREVIEW_SCALE }]}>
             {dateStr}
           </Text>
           <Text style={[styles.daySub, { 
-            fontSize: 22 * PREVIEW_SCALE,
+            fontSize: 20 * PREVIEW_SCALE,
             marginTop: 6 * PREVIEW_SCALE,
           }]}>
             {dayStr}
@@ -118,20 +118,20 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
         
         {/* 메인 영역 - TOTAL CATCH */}
         <View style={[styles.mainArea, { 
-          left: 56 * PREVIEW_SCALE, 
-          right: 56 * PREVIEW_SCALE,
-          bottom: 280 * PREVIEW_SCALE,
+          left: 50 * PREVIEW_SCALE, 
+          right: 50 * PREVIEW_SCALE,
+          bottom: 230 * PREVIEW_SCALE,
         }]}>
           
           {/* 골드 라인 + TOTAL CATCH 라벨 */}
           <View style={[styles.brandAccentLine, { 
-            width: 130 * PREVIEW_SCALE, 
-            height: 8 * PREVIEW_SCALE,
-            marginBottom: 18 * PREVIEW_SCALE,
+            width: 120 * PREVIEW_SCALE, 
+            height: 7 * PREVIEW_SCALE,
+            marginBottom: 14 * PREVIEW_SCALE,
           }]} />
           <Text style={[styles.totalLabel, { 
-            fontSize: 30 * PREVIEW_SCALE, 
-            marginBottom: 8 * PREVIEW_SCALE,
+            fontSize: 26 * PREVIEW_SCALE, 
+            marginBottom: 4 * PREVIEW_SCALE,
           }]}>
             TOTAL CATCH
           </Text>
@@ -139,15 +139,15 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
           {/* 거대한 숫자 + 마리 */}
           <View style={styles.totalNumberRow}>
             <Text style={[styles.totalNumber, { 
-              fontSize: 280 * PREVIEW_SCALE,
-              lineHeight: 280 * PREVIEW_SCALE,
+              fontSize: 220 * PREVIEW_SCALE,
+              lineHeight: 220 * PREVIEW_SCALE,
             }]}>
               {record.totalCount}
             </Text>
             <Text style={[styles.totalUnit, { 
-              fontSize: 60 * PREVIEW_SCALE,
-              marginLeft: 24 * PREVIEW_SCALE,
-              marginBottom: 40 * PREVIEW_SCALE,
+              fontSize: 52 * PREVIEW_SCALE,
+              marginLeft: 20 * PREVIEW_SCALE,
+              marginBottom: 32 * PREVIEW_SCALE,
             }]}>
               마리
             </Text>
@@ -155,8 +155,8 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
           
           {/* 항목별 카운트 */}
           <Text style={[styles.itemsLine, { 
-            fontSize: 32 * PREVIEW_SCALE,
-            marginTop: 16 * PREVIEW_SCALE,
+            fontSize: 28 * PREVIEW_SCALE,
+            marginTop: 12 * PREVIEW_SCALE,
           }]}>
             {itemsLine}
           </Text>
@@ -164,9 +164,9 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
           {/* 메모 (이탤릭 인용) */}
           {record.memo ? (
             <Text style={[styles.memo, { 
-              fontSize: 26 * PREVIEW_SCALE,
-              marginTop: 20 * PREVIEW_SCALE,
-            }]} numberOfLines={2}>
+              fontSize: 24 * PREVIEW_SCALE,
+              marginTop: 14 * PREVIEW_SCALE,
+            }]} numberOfLines={1}>
               "{record.memo}"
             </Text>
           ) : null}
@@ -174,26 +174,26 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
         
         {/* 푸터 - 광고 영역 */}
         <View style={[styles.footerBg, { 
-          height: 220 * PREVIEW_SCALE,
+          height: 190 * PREVIEW_SCALE,
         }]}>
           {/* 골드 상단 라인 */}
           <View style={[styles.footerTopLine, { height: 2 * PREVIEW_SCALE }]} />
           
           {/* 푸터 콘텐츠 */}
           <View style={[styles.footerContent, { 
-            paddingHorizontal: 56 * PREVIEW_SCALE,
-            paddingTop: 32 * PREVIEW_SCALE,
+            paddingHorizontal: 50 * PREVIEW_SCALE,
+            paddingTop: 26 * PREVIEW_SCALE,
           }]}>
             
             {/* QR 코드 */}
             <View style={[styles.qrWrap, { 
-              width: 176 * PREVIEW_SCALE, 
-              height: 176 * PREVIEW_SCALE,
-              padding: 10 * PREVIEW_SCALE,
+              width: 150 * PREVIEW_SCALE, 
+              height: 150 * PREVIEW_SCALE,
+              padding: 8 * PREVIEW_SCALE,
             }]}>
               <QRCode
                 value={GOOGLE_PLAY_URL}
-                size={156 * PREVIEW_SCALE}
+                size={134 * PREVIEW_SCALE}
                 backgroundColor="white"
                 color="black"
               />
@@ -201,23 +201,23 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ record }, ref) => {
             
             {/* FISHLINE + on Google Play + RICHCOMPANY */}
             <View style={[styles.brandTextWrap, { 
-              marginLeft: 32 * PREVIEW_SCALE,
+              marginLeft: 28 * PREVIEW_SCALE,
               flex: 1,
             }]}>
               <Text style={[styles.footerBrand, { 
-                fontSize: 84 * PREVIEW_SCALE,
-                lineHeight: 90 * PREVIEW_SCALE,
+                fontSize: 72 * PREVIEW_SCALE,
+                lineHeight: 78 * PREVIEW_SCALE,
               }]}>
                 FISHLINE
               </Text>
               <View style={styles.googlePlayRow}>
                 <Text style={[styles.footerSub, { 
-                  fontSize: 28 * PREVIEW_SCALE,
+                  fontSize: 24 * PREVIEW_SCALE,
                 }]}>
                   on Google Play
                 </Text>
                 <Text style={[styles.footerCompany, { 
-                  fontSize: 22 * PREVIEW_SCALE,
+                  fontSize: 20 * PREVIEW_SCALE,
                 }]}>
                   RICHCOMPANY
                 </Text>
