@@ -20,6 +20,7 @@ import { useState, useEffect, useRef } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback } from 'react';
+import { useCopilot, CopilotStep, walkthroughable, CopilotProvider } from 'react-native-copilot';
 import { useAppStore } from '@/store/useAppStore';
 import {
   updateFloatingItems,
@@ -35,8 +36,12 @@ import AdModal from '@/components/AdModal';
 import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
 
 const TOGGLE_KEY = 'floating_enabled';
+const TUTORIAL_KEY = 'tutorial_counter_seen';
 
-export default function CounterScreen() {
+// walkthroughable 컴포넌트
+const WalkthroughableView = walkthroughable(View);
+
+function CounterScreenInner() {
  const { items, curId, setCurId, addItem,
         deleteItem, plusCount, minusCount, resetAll,
         resetItem, renameItem,
@@ -280,6 +285,33 @@ const sub = listenFloatingSyncCount(({ items: floatItems }) => {
     }, [])
   );
 
+  // ⭐ 튜토리얼 자동 시작
+  const { start } = useCopilot();
+  
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[TUTORIAL] useFocusEffect 실행됨');
+      AsyncStorage.getItem(TUTORIAL_KEY).then(seen => {
+        console.log('[TUTORIAL] AsyncStorage seen:', seen);
+        if (seen === 'true') {
+          console.log('[TUTORIAL] 이미 본 적 있음 - 종료');
+          return;
+        }
+        console.log('[TUTORIAL] 1.5초 후 start() 호출 예정');
+        setTimeout(() => {
+          console.log('[TUTORIAL] start() 호출!');
+          try {
+            start();
+            AsyncStorage.setItem(TUTORIAL_KEY, 'true');
+            console.log('[TUTORIAL] start() 성공');
+          } catch (e) {
+            console.log('[TUTORIAL] start() 에러:', e);
+          }
+        }, 1500);
+      });
+    }, [start])
+  );
+
   // ⭐ 사용자가 플로팅 버튼을 길게 눌러 종료한 경우 동기화
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -403,16 +435,24 @@ by 웜부자 🐟`,
           <Text style={styles.logo}>FISHLINE</Text>
           <Text style={styles.logoSub}>CATCH COUNTER</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.floatBtn, isFloatingOn && styles.floatBtnActive]} 
-          onPress={handleToggleFloating} 
-          activeOpacity={0.7}
+<CopilotStep
+          text="플로팅 버튼을 켜면 다른 앱 위에서도 카운트할 수 있어요"
+          order={5}
+          name="floating"
         >
-          <Text style={styles.floatBtnIcon}>{isFloatingOn ? '🟢' : '⚪'}</Text>
-          <Text style={[styles.floatBtnText, isFloatingOn && styles.floatBtnTextActive]}>
-            {isFloatingOn ? '플로팅 ON' : '플로팅 OFF'}
-          </Text>
-        </TouchableOpacity>
+          <WalkthroughableView>
+            <TouchableOpacity 
+              style={[styles.floatBtn, isFloatingOn && styles.floatBtnActive]} 
+              onPress={handleToggleFloating} 
+              activeOpacity={0.7}
+            >
+              <Text style={styles.floatBtnIcon}>{isFloatingOn ? '🟢' : '⚪'}</Text>
+              <Text style={[styles.floatBtnText, isFloatingOn && styles.floatBtnTextActive]}>
+                {isFloatingOn ? '플로팅 ON' : '플로팅 OFF'}
+              </Text>
+            </TouchableOpacity>
+          </WalkthroughableView>
+        </CopilotStep>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -420,24 +460,57 @@ by 웜부자 🐟`,
         {/* 항목 탭 */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabsWrap}>
-          {items.map(item => (
-            <TouchableOpacity key={item.id}
-              style={[styles.tab, curId === item.id && styles.tabActive]}
-              onPress={() => handleSelectItem(item.id)}
-              onLongPress={() => handleLongPressItem(item.id)}>
-              <Text style={[styles.tabText, curId === item.id && styles.tabTextActive]}>
-                {item.name}
-              </Text>
-              {item.count > 0 && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>{item.count}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+          {items.map((item, idx) => (
+            idx === 0 ? (
+              <CopilotStep
+                key={item.id}
+                text="항목을 길게 누르면 이름 변경, 리셋, 삭제할 수 있어요"
+                order={3}
+                name="longPress"
+              >
+                <WalkthroughableView>
+                  <TouchableOpacity
+                    style={[styles.tab, curId === item.id && styles.tabActive]}
+                    onPress={() => handleSelectItem(item.id)}
+                    onLongPress={() => handleLongPressItem(item.id)}>
+                    <Text style={[styles.tabText, curId === item.id && styles.tabTextActive]}>
+                      {item.name}
+                    </Text>
+                    {item.count > 0 && (
+                      <View style={styles.tabBadge}>
+                        <Text style={styles.tabBadgeText}>{item.count}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </WalkthroughableView>
+              </CopilotStep>
+            ) : (
+              <TouchableOpacity key={item.id}
+                style={[styles.tab, curId === item.id && styles.tabActive]}
+                onPress={() => handleSelectItem(item.id)}
+                onLongPress={() => handleLongPressItem(item.id)}>
+                <Text style={[styles.tabText, curId === item.id && styles.tabTextActive]}>
+                  {item.name}
+                </Text>
+                {item.count > 0 && (
+                  <View style={styles.tabBadge}>
+                    <Text style={styles.tabBadgeText}>{item.count}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )
           ))}
-          <TouchableOpacity style={styles.addTab} onPress={() => setShowAdd(true)}>
-            <Text style={styles.addTabText}>＋</Text>
-          </TouchableOpacity>
+<CopilotStep
+            text="＋ 버튼을 눌러 어종을 추가하세요. 예: 갑오징어, 쭈꾸미"
+            order={1}
+            name="addItem"
+          >
+            <WalkthroughableView>
+              <TouchableOpacity style={styles.addTab} onPress={() => setShowAdd(true)}>
+                <Text style={styles.addTabText}>＋</Text>
+              </TouchableOpacity>
+            </WalkthroughableView>
+          </CopilotStep>
         </ScrollView>
 
         {/* 카운터 메인 */}
@@ -457,14 +530,20 @@ by 웜부자 🐟`,
               <Text style={styles.speciesLabel}>{curItem?.name.toUpperCase()}</Text>
               <Text style={styles.countNum}>{curItem?.count || 0}</Text>
               <Text style={styles.countUnit}>MARID</Text>
-              <View style={styles.btnWrap}>
-                <TouchableOpacity style={styles.minusBtn} onPress={handleMinus}>
-                  <Text style={styles.minusBtnText}>−</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.plusBtn} onPress={handlePlus}>
-                  <Text style={styles.plusBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
+              <CopilotStep
+                text="＋ 버튼을 눌러 카운트하세요. 한 마리 잡을 때마다 탭!"
+                order={2}
+                name="countPlus"
+              >
+                <WalkthroughableView style={styles.btnWrap}>
+                  <TouchableOpacity style={styles.minusBtn} onPress={handleMinus}>
+                    <Text style={styles.minusBtnText}>−</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.plusBtn} onPress={handlePlus}>
+                    <Text style={styles.plusBtnText}>+</Text>
+                  </TouchableOpacity>
+                </WalkthroughableView>
+              </CopilotStep>
             </>
           )}
         </View>
@@ -473,13 +552,21 @@ by 웜부자 🐟`,
         {/* ⭐ 액션 버튼 영역 (조과 저장 + 히스토리) */}
         {items.length > 0 && (
           <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={styles.actionSaveBtn}
-              onPress={handleOpenSaveRecord}
-              activeOpacity={0.7}
+            <CopilotStep
+              text="오늘 잡은 조과를 사진과 함께 저장하세요"
+              order={4}
+              name="saveRecord"
             >
-              <Text style={styles.actionSaveBtnText}>💾  조과 저장</Text>
-            </TouchableOpacity>
+              <WalkthroughableView style={{ flex: 2 }}>
+                <TouchableOpacity
+                  style={styles.actionSaveBtn}
+                  onPress={handleOpenSaveRecord}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionSaveBtnText}>💾  조과 저장</Text>
+                </TouchableOpacity>
+              </WalkthroughableView>
+            </CopilotStep>
             <TouchableOpacity
               style={styles.actionHistoryBtn}
               onPress={() => router.push('/history')}
@@ -787,7 +874,7 @@ const styles = StyleSheet.create({
 
     // ⭐ 액션 버튼 영역 (조과 저장 + 히스토리)
   actionRow:       { flexDirection: 'row', marginHorizontal: 16, marginTop: 8, marginBottom: 12, gap: 8 },
-  actionSaveBtn:   { flex: 2, paddingVertical: 13, backgroundColor: '#c9a84c', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  actionSaveBtn:   { paddingVertical: 13, backgroundColor: '#c9a84c', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   actionSaveBtnText: { fontSize: 13, color: '#080808', fontWeight: '700', letterSpacing: 1 },
   actionHistoryBtn: { flex: 1, paddingVertical: 13, backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: 'rgba(201,168,76,0.4)', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   actionHistoryBtnText: { fontSize: 12, color: '#c9a84c', fontWeight: '600', letterSpacing: 1 },
@@ -889,3 +976,28 @@ const styles = StyleSheet.create({
                       },
   photoRemoveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
+
+// CopilotProvider로 감싼 외부 컴포넌트 (이게 진짜 export)
+export default function CounterScreen() {
+  return (
+    <CopilotProvider
+      overlay="svg"
+      animated={true}
+      tooltipStyle={{
+        backgroundColor: '#1a1a1a',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#c9a84c',
+        padding: 16,
+      }}
+      labels={{
+        skip: '건너뛰기',
+        previous: '이전',
+        next: '다음',
+        finish: '완료',
+      }}
+    >
+      <CounterScreenInner />
+    </CopilotProvider>
+  );
+}
