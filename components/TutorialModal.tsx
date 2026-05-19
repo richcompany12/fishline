@@ -1,10 +1,9 @@
 /**
  * TutorialModal.tsx
  * 
- * FISHLINE 카운터 탭 사용법 튜토리얼
- * - 풀스크린 모달, 5단계
- * - 실제 화면 스크린샷 + 핑크 강조 + 숫자 마커
- * - 좌우 스와이프 가능 + 인디케이터
+ * 범용 튜토리얼 모달
+ * - 단계별로 다른 이미지 표시 가능
+ * - 풀스크린, 슬라이드, 핑크 강조
  */
 
 import {
@@ -15,67 +14,38 @@ import { useState, useRef } from 'react';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-// 스크린샷 표시 영역 크기
 const SCREENSHOT_W = SCREEN_W * 0.72;
 const SCREENSHOT_H = SCREEN_H * 0.48;
 
-interface TutorialStep {
+const ACCENT = '#ff6b8a';
+const ACCENT_BG = 'rgba(255, 107, 138, 0.18)';
+
+export interface TutorialStep {
   step: number;
   title: string;
   desc: string;
-  // 강조 표시 위치 (스크린샷 내부, % 기준)
+  // 단계마다 다른 이미지 표시 가능
+  image: any;
+  // 강조 표시 위치 (스크린샷 내부, 0~1 비율)
   focus: {
-    top: number;    // 0~1 (상단부터 비율)
-    left: number;   // 0~1 (왼쪽부터 비율)
-    width: number;  // 0~1 (너비 비율)
-    height: number; // 0~1 (높이 비율)
+    top: number;
+    left: number;
+    width: number;
+    height: number;
   };
 }
-
-const STEPS: TutorialStep[] = [
-  {
-    step: 1,
-    title: '＋ 어종 추가',
-    desc: '＋ 버튼을 눌러 어종을 추가하세요\n예: 갑오징어, 쭈꾸미',
-    focus: { top: 0.09, left: 0.40, width: 0.25, height: 0.15 },
-  },
-  {
-    step: 2,
-    title: '＋ 카운트',
-    desc: '＋ 버튼을 눌러 카운트하세요\n한 마리 잡을 때마다 탭!',
-    focus: { top: 0.41, left: 0.40, width: 0.32, height: 0.17 },
-  },
-  {
-    step: 3,
-    title: '✋ 길게 누르기',
-    desc: '아이템 항목을 길게 누르면\n이름 변경, 리셋, 삭제 가능',
-    focus: { top: 0.11, left: 0.11, width: 0.28, height: 0.10 },
-  },
-  {
-    step: 4,
-    title: '💾 조과 저장 & 공유',
-    desc: '오늘 잡은 조과를 사진과 함께 저장하고\n인스타·밴드에 공유할 수 있어요',
-    focus: { top: 0.55, left: 0.09, width: 0.55, height: 0.10 },
-  },
-  {
-    step: 5,
-    title: '🎯 플로팅 카운터',
-    desc: '플로팅 버튼을 켜면\n다른 앱을 사용 중일 때도 카운트가 가능해요',
-    focus: { top: 0.04, left: 0.50, width: 0.38, height: 0.09 },
-  },
-];
 
 interface Props {
   visible: boolean;
   onClose: () => void;
+  steps: TutorialStep[];
+  totalLabel?: string; // "5" or "3" 등
 }
 
-const ACCENT = '#ff6b8a';  // 로즈 핑크
-const ACCENT_BG = 'rgba(255, 107, 138, 0.18)';
-
-export function TutorialModal({ visible, onClose }: Props) {
+export function TutorialModal({ visible, onClose, steps, totalLabel }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const total = totalLabel || String(steps.length);
 
   const goToStep = (index: number) => {
     scrollRef.current?.scrollTo({ x: index * SCREEN_W, animated: true });
@@ -88,7 +58,7 @@ export function TutorialModal({ visible, onClose }: Props) {
   };
 
   const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       goToStep(currentStep + 1);
     } else {
       onClose();
@@ -98,6 +68,11 @@ export function TutorialModal({ visible, onClose }: Props) {
   const handlePrev = () => {
     if (currentStep > 0) goToStep(currentStep - 1);
   };
+
+  // visible이 false면 currentStep 초기화
+  if (!visible && currentStep !== 0) {
+    setCurrentStep(0);
+  }
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false}>
@@ -124,7 +99,7 @@ export function TutorialModal({ visible, onClose }: Props) {
           scrollEventThrottle={16}
           style={styles.slideArea}
         >
-          {STEPS.map((step) => {
+          {steps.map((step) => {
             const focusTop = step.focus.top * SCREENSHOT_H;
             const focusLeft = step.focus.left * SCREENSHOT_W;
             const focusW = step.focus.width * SCREENSHOT_W;
@@ -133,10 +108,9 @@ export function TutorialModal({ visible, onClose }: Props) {
             return (
               <View key={step.step} style={styles.slide}>
                 
-                {/* 스크린샷 + 강조 표시 */}
                 <View style={styles.screenshotWrap}>
                   <Image
-                    source={require('@/assets/tutorial/screen.png')}
+                    source={step.image}
                     style={styles.screenshot}
                     resizeMode="contain"
                   />
@@ -155,7 +129,7 @@ export function TutorialModal({ visible, onClose }: Props) {
                     pointerEvents="none"
                   />
                   
-                  {/* 숫자 마커 (강조 박스 좌상단에) */}
+                  {/* 숫자 마커 */}
                   <View
                     style={[
                       styles.numberDot,
@@ -170,10 +144,9 @@ export function TutorialModal({ visible, onClose }: Props) {
                   </View>
                 </View>
 
-                {/* 안내 카드 */}
                 <View style={styles.infoCard}>
                   <View style={styles.stepBadge}>
-                    <Text style={styles.stepBadgeText}>STEP {step.step} / 5</Text>
+                    <Text style={styles.stepBadgeText}>STEP {step.step} / {total}</Text>
                   </View>
                   <Text style={styles.stepTitle}>{step.title}</Text>
                   <Text style={styles.stepDesc}>{step.desc}</Text>
@@ -185,7 +158,7 @@ export function TutorialModal({ visible, onClose }: Props) {
 
         {/* 페이지 인디케이터 */}
         <View style={styles.indicators}>
-          {STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <View
               key={i}
               style={[styles.dot, i === currentStep && styles.dotActive]}
@@ -207,7 +180,7 @@ export function TutorialModal({ visible, onClose }: Props) {
 
           <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
             <Text style={styles.nextBtnText}>
-              {currentStep === STEPS.length - 1 ? '시작하기 🎣' : '다음 →'}
+              {currentStep === steps.length - 1 ? '시작하기 🎣' : '다음 →'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -221,8 +194,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#080808',
   },
-  
-  // 헤더
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -258,8 +229,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
-
-  // 슬라이드 영역
   slideArea: {
     flex: 1,
   },
@@ -268,8 +237,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 16,
   },
-  
-  // 스크린샷
   screenshotWrap: {
     width: SCREENSHOT_W,
     height: SCREENSHOT_H,
@@ -317,8 +284,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
   },
-
-  // 안내 카드
   infoCard: {
     marginTop: 20,
     marginHorizontal: 20,
@@ -361,8 +326,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexWrap: 'wrap',
   },
-
-  // 인디케이터
   indicators: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -379,8 +342,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8c96a',
     width: 24,
   },
-
-  // 하단 버튼
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 20,

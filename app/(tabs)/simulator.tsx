@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, ScrollView,
          TouchableOpacity, Dimensions, Share } from 'react-native';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PE_DATA, SINKERS, LineType } from '@/constants/peData';
 import { calcLineCurve } from '@/lib/physics';
 import { useAppStore } from '@/store/useAppStore';
@@ -8,6 +10,7 @@ import Svg, { Path, Line, Circle, Rect, Defs,
                LinearGradient, Stop, Image as SvgImage,
                ClipPath } from 'react-native-svg';
 import AdModal from '@/components/AdModal';
+import { TutorialModal, TutorialStep } from '@/components/TutorialModal';
 import { shouldShowAd, markAdShown, AD_KEY_SETTINGS } from '@/lib/adService';
 
 const { width } = Dimensions.get('window');
@@ -17,6 +20,33 @@ const CANVAS_H = 420;
 // ⭐ 이미지 파일 import
 const underwaterBg = require('@/assets/images/underwater_bg.png');
 const boatImage = require('@/assets/images/boat.png');
+
+const TUTORIAL_KEY = 'tutorial_simulator_seen';
+
+// 시뮬레이터 탭 튜토리얼 단계
+const SIMULATOR_TUTORIAL_STEPS: TutorialStep[] = [
+  {
+    step: 1,
+    title: '🎣 라인 & 봉돌 선택',
+    desc: '본인의 라인과 봉돌(싱커/메탈)을\n선택하세요',
+    image: require('@/assets/tutorial/simulator.png'),
+    focus: { top: 0.09, left: 0.05, width: 0.80, height: 0.30 },  // 추정치, 조정 필요
+  },
+  {
+    step: 2,
+    title: '🌊 현장 상황 입력',
+    desc: '현장 상황에 맞게\n조류 속도와 수심을 조절하세요',
+    image: require('@/assets/tutorial/simulator2.png'),
+    focus: { top: 0.62, left: 0.05, width: 0.80, height: 0.180 },  // 추정치, 조정 필요
+  },
+  {
+    step: 3,
+    title: '💾 내 세팅 저장 & 비교',
+    desc: '내 세팅 저장 버튼을 눌러\n다른 사람의 라인과 비교해보세요',
+    image: require('@/assets/tutorial/simulator3.png'),
+    focus: { top: 0.45, left: 0.55, width: 0.30, height: 0.45 },  // 추정치, 조정 필요
+  },
+];
 
 export default function SimulatorScreen() {
   const { boatRatio, mySetting, saveUserSetting } = useAppStore();
@@ -50,6 +80,25 @@ export default function SimulatorScreen() {
   const cx = CANVAS_W / 2;
   const ox = cx + 34;
   const oy = surfY - 8;
+
+  // ⭐ 튜토리얼 표시 상태
+  const [showTutorial, setShowTutorial] = useState(false);
+  
+  // 화면 포커스 받을 때마다 체크
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem(TUTORIAL_KEY).then(seen => {
+        if (seen !== 'true') {
+          setTimeout(() => setShowTutorial(true), 500);
+        }
+      });
+    }, [])
+  );
+  
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+    AsyncStorage.setItem(TUTORIAL_KEY, 'true');
+  };
 
   // ⭐ 배 이미지 크기 및 위치 설정
   const boatWidth = 110;
@@ -380,6 +429,13 @@ by 웜부자 🐟`,
         visible={adVisible}
         storagePathOrUrl="ads/settings_save.jpg"
         onClose={() => setAdVisible(false)}
+      />
+
+      {/* ⭐ 튜토리얼 모달 */}
+      <TutorialModal
+        visible={showTutorial}
+        onClose={handleTutorialClose}
+        steps={SIMULATOR_TUTORIAL_STEPS}
       />
 
     </View>

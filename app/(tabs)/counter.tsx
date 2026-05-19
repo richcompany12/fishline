@@ -33,11 +33,50 @@ import {
 import { saveHistory, generateDefaultMemo } from '@/lib/historyService';
 import { pickFromGallery, takePhoto } from '@/lib/photoService';
 import AdModal from '@/components/AdModal';
-import { TutorialModal } from '@/components/TutorialModal';
+import { TutorialModal, TutorialStep } from '@/components/TutorialModal';
 import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
 
 const TOGGLE_KEY = 'floating_enabled';
 const TUTORIAL_KEY = 'tutorial_counter_seen';
+
+// 카운터 탭 튜토리얼 단계
+const COUNTER_TUTORIAL_STEPS: TutorialStep[] = [
+  {
+    step: 1,
+    title: '＋ 어종 추가',
+    desc: '＋ 버튼을 눌러 어종을 추가하세요\n예: 문어, 한치',
+    image: require('@/assets/tutorial/screen.png'),
+    focus: { top: 0.09, left: 0.40, width: 0.25, height: 0.15 },  // 대표님이 맞춘 값으로 변경 필요!
+  },
+  {
+    step: 2,
+    title: '＋ 카운트',
+    desc: '＋ 버튼을 눌러 카운트하세요\n한 마리 잡을 때마다 탭!',
+    image: require('@/assets/tutorial/screen.png'),
+    focus: { top: 0.41, left: 0.40, width: 0.32, height: 0.17 },
+  },
+  {
+    step: 3,
+    title: '✋ 길게 누르기',
+    desc: '아이템항목을 길게 누르면\n이름변경, 리셋, 삭제가능',
+    image: require('@/assets/tutorial/screen.png'),
+    focus: { top: 0.11, left: 0.11, width: 0.28, height: 0.10 },
+  },
+  {
+    step: 4,
+    title: '💾 조과 저장 & 공유',
+    desc: '오늘 잡은 조과를 사진과 함께 저장하고\n인스타·밴드에 공유할 수 있어요',
+    image: require('@/assets/tutorial/screen.png'),
+    focus: { top: 0.55, left: 0.09, width: 0.55, height: 0.10 },
+  },
+  {
+    step: 5,
+    title: '🎯 플로팅 카운터',
+    desc: '플로팅 버튼을 켜면\n다른 앱을 사용 중일 때도 카운트가 가능해요',
+    image: require('@/assets/tutorial/screen.png'),
+    focus: { top: 0.04, left: 0.50, width: 0.38, height: 0.09 },
+  },
+];
 
 function CounterScreen() {
  const { items, curId, setCurId, addItem,
@@ -286,14 +325,16 @@ const sub = listenFloatingSyncCount(({ items: floatItems }) => {
   // ⭐ 튜토리얼 표시 상태
   const [showTutorial, setShowTutorial] = useState(false);
   
-  // 첫 실행 시 튜토리얼 자동 시작
-  useEffect(() => {
-    AsyncStorage.getItem(TUTORIAL_KEY).then(seen => {
-      if (seen !== 'true') {
-        setTimeout(() => setShowTutorial(true), 500);
-      }
-    });
-  }, []);
+  // 화면 포커스 받을 때마다 체크 (설정에서 초기화한 경우도 반영)
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem(TUTORIAL_KEY).then(seen => {
+        if (seen !== 'true') {
+          setTimeout(() => setShowTutorial(true), 500);
+        }
+      });
+    }, [])
+  );
   
   const handleTutorialClose = () => {
     setShowTutorial(false);
@@ -759,6 +800,7 @@ return (
       <TutorialModal
         visible={showTutorial}
         onClose={handleTutorialClose}
+        steps={COUNTER_TUTORIAL_STEPS}
       />
     </View>
   );

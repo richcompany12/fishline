@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, Switch, AppState, TouchableOpacity, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, AppState, TouchableOpacity, Share, Alert } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 import { useAppStore } from '@/store/useAppStore';
 import { startFloatingButton, stopFloatingButton, updateFloatingItems, updateFloatingStyle, FloatSize, FloatColor, listenFloatingStoppedByUser } from '@/lib/FloatingService';
 import AdModal from '@/components/AdModal';
@@ -10,6 +11,13 @@ import { shouldShowAd, markAdShown, AD_KEY_FLOATING } from '@/lib/adService';
 const TOGGLE_KEY = 'floating_enabled';
 const SIZE_KEY = 'floating_size';
 const COLOR_KEY = 'floating_color';
+
+// 튜토리얼 키들 (모든 화면 공통)
+const TUTORIAL_KEYS = [
+  'tutorial_counter_seen',
+  'tutorial_simulator_seen',
+  'tutorial_history_seen',
+];
 
 export default function SettingsScreen() {
   const { boatRatio, setBoatRatio } = useAppStore();
@@ -45,6 +53,34 @@ export default function SettingsScreen() {
     }, [])
   );
 
+  // ⭐ 튜토리얼 다시 보기
+  const handleResetTutorials = () => {
+    Alert.alert(
+      '튜토리얼 다시 보기',
+      '튜토리얼을 처음부터 다시 볼 수 있어요.\n각 탭에 처음 들어갈 때 자동으로 표시됩니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '초기화',
+          onPress: async () => {
+            try {
+              await Promise.all(
+                TUTORIAL_KEYS.map(key => AsyncStorage.removeItem(key))
+              );
+              Alert.alert(
+                '✅ 완료', 
+                '각 탭에 들어가면 튜토리얼이 시작됩니다.'
+              );
+            } catch (e) {
+              Alert.alert('오류', '다시 시도해주세요.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+
   // ⭐ 플로팅에서 4초 종료한 경우 → 토글 자동 OFF
   useEffect(() => {
     const sub = listenFloatingStoppedByUser(async () => {
@@ -54,6 +90,7 @@ export default function SettingsScreen() {
     return () => sub.remove();
   }, []);
 
+ 
   // 권한 설정 화면 갔다가 앱으로 돌아올 때 자동으로 서비스 시작 재시도
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (state) => {
@@ -80,6 +117,7 @@ export default function SettingsScreen() {
     });
     return () => sub.remove();
   }, [floatingEnabled, floatSize, floatColor]);
+
 
     // ⭐ 앱 공유 기능
   const handleShare = async () => {
@@ -220,6 +258,8 @@ by 웜부자 🐟`,
             </View>
           )}
         </View>
+        
+
 
         {/* v1.0.1 추가: 버튼 크기 */}
         <View style={styles.card}>
@@ -287,6 +327,25 @@ by 웜부자 🐟`,
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+                {/* ⭐ 튜토리얼 다시 보기 */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>TUTORIAL</Text>
+          <TouchableOpacity 
+            style={styles.tutorialBtn} 
+            onPress={handleResetTutorials}
+            activeOpacity={0.7}
+          >
+            <View style={styles.tutorialBtnLeft}>
+              <Text style={styles.tutorialBtnIcon}>📖</Text>
+              <View>
+                <Text style={styles.tutorialBtnTitle}>튜토리얼 다시 보기</Text>
+                <Text style={styles.tutorialBtnDesc}>앱 사용법을 처음부터 다시 안내해 드려요</Text>
+              </View>
+            </View>
+            <Text style={styles.tutorialBtnArrow}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 앱 정보 */}
@@ -414,6 +473,38 @@ const styles = StyleSheet.create({
   rowKey: { fontSize:12, color:'#8a7a5a' },
   rowVal: { fontSize:12, color:'#f0ead8', fontWeight:'500' },
   
+  // ⭐ 튜토리얼 버튼
+  tutorialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  tutorialBtnLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  tutorialBtnIcon: {
+    fontSize: 24,
+  },
+  tutorialBtnTitle: {
+    fontSize: 13,
+    color: '#f0ead8',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  tutorialBtnDesc: {
+    fontSize: 11,
+    color: '#8a7a5a',
+  },
+  tutorialBtnArrow: {
+    fontSize: 24,
+    color: '#c9a84c',
+    fontWeight: '300',
+  },
+
   // v1.0.1 추가: 버튼 크기 스타일
   sizeRow: {
     flexDirection: 'row',
